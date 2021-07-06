@@ -19,8 +19,6 @@ read_data <- function (infile,header) {
   return(data)
 }
 
-
-
 D3toD2 <- function(i,j,k,nRows,nCols,nPages) {
 
   if (missing(i) && missing(j)) {
