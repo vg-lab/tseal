@@ -19,7 +19,6 @@
 #'
 #' @importFrom bigmemory as.matrix GetMatrixSize
 #' @importFrom waveslim modwt wave.variance wave.correlation wave.filter
-#' @importFrom Rdsm mgrinit makebarr mgrmakevar barr getidxs getmatrix readsync writesync stoprdsm
 #' @importFrom parallel makeCluster clusterExport clusterEvalQ detectCores
 #' @importFrom pryr object_size
 #' @importFrom stats sd
