@@ -9,8 +9,7 @@ MultiVaweAnalisys(
   XSeries2,
   f,
   lev = 0,
-  Var = TRUE,
-  Cor = TRUE,
+  features = c("Var", "Cor", "IQR", "PE", "DM"),
   nCores = 0
 )
 }
@@ -23,11 +22,11 @@ MultiVaweAnalisys(
 
 \item{lev}{Wavelet descomposition level by default is selcted using the "conservative" strategy. See chooseLevel function.}
 
+\item{nCores}{determines the number of processes that will be used in the function, by default it uses all but one of the system cores.}
+
 \item{Var}{a boolean that determines if the analissy contains the variances.}
 
 \item{Cor}{a boolean that determines if the analissy contains the correlations.}
-
-\item{nCores}{determines the number of processes that will be used in the function, by default it uses all but one of the system cores.}
 }
 \value{
 An object of class WaveAnalisys

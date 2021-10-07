@@ -13,8 +13,8 @@ trainModelData(
   maxvars = 0,
   Vstep = 0,
   lev = 0,
-  Var = TRUE,
-  Cor = TRUE
+  features = c("Var", "Cor", "IQR", "PE", "DM"),
+  nCores = 0
 )
 }
 \arguments{

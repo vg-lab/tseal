@@ -4,7 +4,14 @@
 \alias{StepDiscrim}
 \title{Stepwise discriminant}
 \usage{
-StepDiscrim(WVC, grps, maxvars, Var = TRUE, Cor = TRUE, nCores = 0)
+StepDiscrim(
+  WVC,
+  grps,
+  maxvars,
+  features = c("Var", "Cor", "IQR", "PE", "DM"),
+  nCores = 0,
+  pos = FALSE
+)
 }
 \arguments{
 \item{WVC}{WaveAnalisys object obtained with MultiVaweAnalisys function}
@@ -13,13 +20,13 @@ StepDiscrim(WVC, grps, maxvars, Var = TRUE, Cor = TRUE, nCores = 0)
 
 \item{maxvars}{The number of desired values.}
 
+\item{nCores}{determines the number of processes that will be used in the function, by default it uses all but one of the system cores.}
+
 \item{Var}{Determines if the algorithm take in account the variances.
 For use this option, the provided WaveAnalisys has to have variances}
 
 \item{Cor}{Determines if the algorithm take in account the correlations.
 For use this option, the provided WaveAnalisys has to have correlations}
-
-\item{nCores}{determines the number of processes that will be used in the function, by default it uses all but one of the system cores.}
 }
 \value{
 A WaveAnalisys object with the maxvars most discriminant variables,

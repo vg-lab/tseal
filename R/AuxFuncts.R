@@ -36,6 +36,33 @@ D3toD2 <- function(i,j,k,nRows,nCols,nPages) {
   return (list( k,list(i*nCols + j,i*nCols + j)))
 }
 
+generateStepDiscrimWMA <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+  if (missing(maxvars) && missing(Vstep)){
+    stop("maxvars o Vstep must be defined")
+  }
+  if (!missing(maxvars) && !missing(Vstep)){
+    stop("only maxvars or Vstep can be defined.")
+  }
+  if (!missing(maxvars) && maxvars < 0) {
+    stop("maxVars must be >0")
+  }
+  if (!missing(Vstep && Vstep <0)){
+    stop("Vstep must be >0")
+  }
+
+  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,XSeries2[[3]],1))
+  MWA <- MultiVaweAnalisys(XSeries1,XSeries2,f,lev,Var,Cor)
+  if (!missing(maxvars)){
+    MWA <- StepDiscrim(MWA,grps,maxvars,Var,Cor)
+  } else {
+    MWA <- StepDiscrimV(MWA,grps,Vstep,Var,Cor)
+  }
+
+  return(MWA)
+}
+
+
+
 
 #' testFilters
 #'
@@ -66,40 +93,34 @@ D3toD2 <- function(i,j,k,nRows,nCols,nPages) {
 #' * \code{\link{StepDiscrim}}
 #'
 #' @md
-testFilters <- function(XSeries1,XSeries2,var,filters = c("haar","d4","d6","d8","la8"),lev = 0) { #change maxvars for vector, and add a vector of filters.
+testFilters <- function(XSeries1,XSeries2,var,filters = c("haar","d4","d6","d8","la8"),features = c("Var","Cor","IQR","PE","DM"),lev = 0) { #change maxvars for vector, and add a vector of filters.
   data <- list()
   grps <- rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
+  nFeatures <- length(features)
 
   for (f in filters) {
     print(f)
     MWA <- MultiVaweAnalisys(XSeries1,XSeries2,f)
-    print("Var&Cor")
-    MWAVarCOR <- StepDiscrim(MWA,grps,maxvars = var)
-    print("Var")
-    MWAVar <- StepDiscrim(MWA,grps,maxvars = var,Var = TRUE, Cor = FALSE)
-    print("Cor")
-    MWACor <- StepDiscrim(MWA,grps,maxvars = var,Var = FALSE, Cor = TRUE)
-    print("Discrim")
-    for (v in 2:var) {
-      print(v)
-
-      aux <- MWAVarCOR
-      aux$Values <- aux$Values[sort(aux$importance[1:v]),]
-      data <- append(data,list(list(CM = LOOCV(aux,grps,"linear"),Vars = TRUE,Cors = TRUE, NVars = v,Method = "linear",Filter = f)))
-      data <- append(data,list(list(CM = LOOCV(aux,grps,"quadratic"),Vars = TRUE,Cors = TRUE, NVars = v,Method = "quadratic",Filter = f)))
-
-      aux <- MWAVar
-      aux$Values <- aux$Values[sort(aux$importance[1:v]),]
-      data <- append(data,list(list(CM = LOOCV(aux,grps,"linear"),Vars = TRUE,Cors = FALSE, NVars = v,Method = "linear",Filter = f)))
-      data <- append(data,list(list(CM = LOOCV(aux,grps,"quadratic"),Vars = TRUE,Cors = FALSE, NVars = v,Method = "quadratic",Filter = f)))
-
-      aux <- MWACor
-      aux$Values <- aux$Values[sort(aux$importance[1:v]),]
-      data <- append(data,list(list(CM = LOOCV(aux,grps,"linear"),Vars = FALSE,Cors = TRUE, NVars = v,Method = "linear",Filter = f)))
-      data <- append(data,list(list(CM = LOOCV(aux,grps,"quadratic"),Vars = FALSE,Cors = TRUE, NVars = v,Method = "quadratic",Filter = f)))
-
+    for ( i in 1:nFeatures) {
+      comFeatures <- combn(features,i)
+      listFeatures <- split(comFeatures, rep(1:ncol(comFeatures), each = nrow(comFeatures)))
+      for (cFeatures in listFeatures){
+        print(cFeatures)
+        aux <- StepDiscrim(MWA,grps,var,cFeatures,pos=TRUE)
+        Tr <- aux[[1]]
+        incl <- aux[[2]]
+        print("Validation")
+        maxVar <- min(var,length(incl))
+        for (v in 2:maxVar){
+          print(v)
+          filterValues <- Tr[incl[1:v],]
+          MWAAux <- list(Var = filterValues, Cor = NA, IQR = NA, DM = NA, PE = NA, Observations = MWA$Observations, NLevels = MWA$NLevels, filter = MWA$filter)
+          attr(MWAAux,"class") <- "WaveAnalisys"
+          data <- append(data,list(list(CM = LOOCV(MWAAux,grps,"linear"),NVars = v,Method = "linear",filter = f, Features = cFeatures)))
+          data <- append(data,list(list(CM = LOOCV(MWAAux,grps,"quadratic"),NVars = v,Method = "quadratic",filter = f, Features = cFeatures)))
+        }
+      }
     }
   }
-
   return(data)
 }

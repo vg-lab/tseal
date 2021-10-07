@@ -16,9 +16,9 @@ test_that("test MultiWaveAnalisysVarCOR", {
 
   MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar")
   m <- read.csv("../Results/MWA.csv", header = FALSE)
-  expect_equal(MWA$Values,as.matrix(m),tolerance = 0.01, ignore_attr = TRUE)
-  expect_equal(MWA$Vars,NVar)
-  expect_equal(MWA$Cors,NCor)
+  expect_equal(rbind(MWA$Var,MWA$Cor),as.matrix(m),tolerance = 0.01, ignore_attr = TRUE)
+  # expect_equal(MWA$Vars,NVar)
+  # expect_equal(MWA$Cors,NCor)
 })
 
 test_that("test MultiWaveAnalisysCor", {
@@ -39,11 +39,11 @@ test_that("test MultiWaveAnalisysCor", {
   mainExperiments <- totalExperiments[1:electrodes,1:20,1:NmainExperiments]
   piedExperiments <- totalExperiments[1:electrodes,1:20,272:NpiedExperiments]
 
-  MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar",Var = FALSE)
+  MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar")
 
-  expect_equal(MWA$Values,as.matrix(m),tolerance = 0.01,ignore_attr = TRUE)
-  expect_equal(MWA$Vars,NVar)
-  expect_equal(MWA$Cors,NCor)
+  expect_equal(MWA$Cor,as.matrix(m),tolerance = 0.01,ignore_attr = TRUE)
+  # expect_equal(MWA$Vars,NVar)
+  # expect_equal(MWA$Cors,NCor)
 
 })
 
@@ -65,11 +65,11 @@ test_that("test MultiWaveAnalisysVar", {
   mainExperiments <- totalExperiments[1:electrodes,1:20,1:NmainExperiments]
   piedExperiments <- totalExperiments[1:electrodes,1:20,272:NpiedExperiments]
 
-  MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar",Cor = FALSE)
+  MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar")
 
-  expect_equal(MWA$Values,as.matrix(m),tolerance = 0.01,ignore_attr = TRUE)
-  expect_equal(MWA$Vars,NVar)
-  expect_equal(MWA$Cors,NCor)
+  expect_equal(MWA$Var,as.matrix(m),tolerance = 0.01,ignore_attr = TRUE)
+  # expect_equal(MWA$Vars,NVar)
+  # expect_equal(MWA$Cors,NCor)
 
 })
 

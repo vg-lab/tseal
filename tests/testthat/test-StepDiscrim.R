@@ -12,10 +12,10 @@ test_that("test StepDiscrim", {
   piedExperiments <- totalExperiments[1:electrodes,1:20,272:NpiedExperiments]
 
   MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar")
-  MWA2 <- StepDiscrim(MWA,MedicalClasification,20)
+  MWA2 <- StepDiscrim(MWA,MedicalClasification,20,c("Var","Cor"))
 
   m <- read.csv("../Results/StepVar&Cor.csv", header = FALSE)
-  expect_equal(MWA2[[1]],as.matrix(m),ignore_attr = TRUE)
+  expect_equal(values(MWA2),as.matrix(m),ignore_attr = TRUE)
 })
 
 test_that("test StepDiscrimVar", {
@@ -32,10 +32,10 @@ test_that("test StepDiscrimVar", {
   piedExperiments <- totalExperiments[1:electrodes,1:20,272:NpiedExperiments]
 
   MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar")
-  MWA2 <- StepDiscrim(MWA,MedicalClasification,20,Cor = FALSE)
+  MWA2 <- StepDiscrim(MWA,MedicalClasification,20,c("Var"))
 
   m <- read.csv("../Results/StepVar.csv", header = FALSE)
-  expect_equal(MWA2[[1]],as.matrix(m),ignore_attr = TRUE)
+  expect_equal(values(MWA2),as.matrix(m),ignore_attr = TRUE)
 })
 
 test_that("test StepDiscrimCor", {
@@ -52,8 +52,8 @@ test_that("test StepDiscrimCor", {
   piedExperiments <- totalExperiments[1:electrodes,1:20,272:NpiedExperiments]
 
   MWA <- MultiVaweAnalisys(mainExperiments,piedExperiments,"haar")
-  MWA2 <- StepDiscrim(MWA,MedicalClasification,20,Var = FALSE)
+  MWA2 <- StepDiscrim(MWA,MedicalClasification,20,c("Cor"))
 
   m <- read.csv("../Results/StepCor.csv", header = FALSE)
-  expect_equal(MWA2[[1]],as.matrix(m),ignore_attr = TRUE)
+  expect_equal(values(MWA2),as.matrix(m),ignore_attr = TRUE)
 })

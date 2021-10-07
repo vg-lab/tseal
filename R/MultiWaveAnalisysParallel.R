@@ -23,10 +23,17 @@
 #' @importFrom pryr object_size
 #' @importFrom stats sd
 #' @importFrom utils combn
-MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,Var = TRUE, Cor = TRUE, nCores = 0){
+#' @importFrom statcomp permutation_entropy ordinal_pattern_distribution
+#' @importFrom wdm wdm
+MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","Cor","IQR","PE","DM"), nCores = 0){
   if (nCores == 0) {
     nCores = detectCores() - 1
   }
+  HVar <- "Var" %in% features
+  HCor <- "Cor" %in% features
+  HIQR <- "IQR" %in% features
+  HPE  <- "PE"  %in% features
+  HDM  <- "DM"  %in% features
 
   dim1 <- dim(XSeries1)
   dim2 <- dim(XSeries2)
@@ -75,9 +82,10 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,Var = TRUE, Cor = TRU
 
 
   clusterExport(c,c("nv1","nr1","nc1","nc2"), envir= environment())
-  clusterExport(c,c("modwt","wave.variance","wave.correlation","D3toD2"))
+  clusterExport(c,c("modwt","wave.variance","wave.correlation","D3toD2","computeIQR",
+                    "computePermutationEntropy","permutation_entropy", "wdm",
+                    "ordinal_pattern_distribution","computeDMeasure"))
   clusterEvalQ(c,{
-
   ids <- getidxs(nv1)
   for (i in ids) {
     for (j in 1:nc1) {
@@ -94,8 +102,9 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,Var = TRUE, Cor = TRU
   barr()
   })
 
-  NVar <- if(Var) nv1 * lev else 0
-  if (Cor) {
+
+  NVar <- if(HVar) nv1 * lev else 0
+  if (HCor || HDM) {
     NbK <- combn(1:nv1,2)
     NumberNbK <- dim(NbK)[2]
     NCor <- NumberNbK * lev
@@ -105,74 +114,111 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,Var = TRUE, Cor = TRU
     NbK <- 0
   }
 
-  clusterExport(c,c("NVar","NCor","NumberNbK","NbK","lev","f","Var","Cor"),envir = environment())
-  mgrmakevar(c,"WVC",NVar+NCor,nc1 + nc2)
 
-  for (i in nc1){
-    WJ <- list()
-    for (j in 1:nv1){
-      aux = D3toD2(j,,i,nv1,nr1,nc1)
-      Vtemporal <- YSeries1[aux[[1]],aux[[2]][[1]]:aux[[2]][[2]]]
-      aux.modwt <- modwt(Vtemporal,f,lev)
-      WJ <- append(WJ,list(aux.modwt))
-      if (Var) {
-        WVARAux <- wave.variance(aux.modwt)
-        WVC[((j-1) * lev + 1):(j*lev),i] <- WVARAux[1:lev,1]
-      }
-    }
 
-    if (Cor) {
-      for (k in 1:NumberNbK) {
-        WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
-        WVC[(NVar+(k-1)*lev + 1):(NVar + k * lev),i] <- WCOR[1:lev,1]
-      }
-    }
+  clusterExport(c,c("NumberNbK","NbK","lev","f","HVar","HCor","HIQR","HPE","HDM"),envir = environment())
+  if (HVar) {
+    mgrmakevar(c,"Var",NVar,nc1 + nc2)
+  } else {
+    Var = NA
   }
+  if (HCor) {
+    mgrmakevar(c,"Cor",NCor,nc1 + nc2)
+  } else {
+    Cor = NA
+  }
+  if (HIQR) {
+    mgrmakevar(c,"IQR",NVar,nc1 + nc2)
+  } else {
+    IQR = NA
+  }
+  if (HPE) {
+    mgrmakevar(c,"PE",NVar,nc1 + nc2)
+  } else {
+    PE = NA
+  }
+  if (HDM) {
+    mgrmakevar(c,"DM",NCor,nc1 + nc2)
+  } else {
+    DM = NA
+  }
+
 
   clusterEvalQ (c, {
     ids <- getidxs(nc1)
     for (i in ids){
       WJ <- list()
-        for (j in 1:nv1){
-          aux = D3toD2(j,,i,nv1,nr1,nc1)
-          Vtemporal <- YSeries1[aux[[1]],aux[[2]][[1]]:aux[[2]][[2]]]
-          aux.modwt <- modwt(Vtemporal,f,lev)
-          WJ <- append(WJ,list(aux.modwt))
-          if (Var) {
-            WVARAux <- wave.variance(aux.modwt)
-            WVC[((j-1) * lev + 1):(j*lev),i] <- WVARAux[1:lev,1]
-          }
-        }
+      print(i)
+      for (j in 1:nv1){
+        print(j)
+        aux = D3toD2(j,,i,nv1,nr1,nc1)
+        Vtemporal <- YSeries1[aux[[1]],aux[[2]][[1]]:aux[[2]][[2]]]
+        aux.modwt <- modwt(Vtemporal,f,lev)
+        WJ <- append(WJ,list(aux.modwt))
 
-      if (Cor) {
+        if (HVar) {
+          WVARAux <- wave.variance(aux.modwt)
+          Var[((j-1) * lev + 1):(j*lev),i] <- WVARAux[1:lev,1]
+        }
+        if (HIQR) {
+          WIQRAux <- computeIQR(aux.modwt)
+          IQR[((j-1) * lev + 1):(j*lev),i] <- WIQRAux
+        }
+        if (HPE) {
+          WPEAux <- computePermutationEntropy(aux.modwt)
+          PE[((j-1) * lev + 1):(j*lev),i] <- WPEAux
+        }
+      }
+
+      if (HCor || HDM) {
         for (k in 1:NumberNbK) {
-          WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
-          WVC[(NVar+(k-1)*lev + 1):(NVar + k * lev),i] <- WCOR[1:lev,1]
+          if (HCor){
+            WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
+            Cor[((k-1)*lev + 1):(k * lev),i] <- WCOR[1:lev,1]
+          }
+          if (HDM) {
+            WDM <- computeDMeasure(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]])
+            DM[((k-1)*lev + 1):(k * lev),i] <- WDM
+          }
         }
       }
     }
-  })
 
-  clusterEvalQ(c,{
     ids <- getidxs(nc2)
     ids <- sapply(ids, function(x) x+nc1)
     for (i in ids) {
       WJ <- list()
-        for (j in 1:nv1){
-          aux = D3toD2(j,,i-nc1,nv1,nr1,nc2)
-          Vtemporal <- YSeries2[aux[[1]],aux[[2]][[1]]:aux[[2]][[2]]]
-          aux.modwt <- modwt(Vtemporal,f,lev)
-          WJ <- append(WJ,list(aux.modwt))
-          if (Var) {
-            WVARAux <- wave.variance(aux.modwt)
-            WVC[((j-1) * lev + 1):(j*lev),i] <- WVARAux[1:lev,1]
-          }
-        }
+      for (j in 1:nv1){
+        aux = D3toD2(j,,i-nc1,nv1,nr1,nc2)
+        Vtemporal <- YSeries2[aux[[1]],aux[[2]][[1]]:aux[[2]][[2]]]
+        aux.modwt <- modwt(Vtemporal,f,lev)
+        WJ <- append(WJ,list(aux.modwt))
 
-      if (Cor) {
+
+        if (HVar) {
+          WVARAux <- wave.variance(aux.modwt)
+          Var[((j-1) * lev + 1):(j*lev),i] <- WVARAux[1:lev,1]
+        }
+        if (HIQR) {
+          WIQRAux <- computeIQR(aux.modwt)
+          IQR[((j-1) * lev + 1):(j*lev),i] <- WIQRAux
+        }
+        if (HPE) {
+          WPEAux <- computePermutationEntropy(aux.modwt)
+          PE[((j-1) * lev + 1):(j*lev),i] <- WPEAux
+        }
+      }
+
+      if (HCor || HDM) {
         for (k in 1:NumberNbK) {
-          WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
-          WVC[(NVar+(k-1)*lev + 1):(NVar + k * lev),i] <- WCOR[1:lev,1]
+          if (HCor){
+            WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
+            Cor[((k-1)*lev + 1):(k * lev),i] <- WCOR[1:lev,1]
+          }
+          if (HDM) {
+            WDM <- computeDMeasure(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]])
+            DM[((k-1)*lev + 1):(k * lev),i] <- WDM
+          }
         }
       }
     }
@@ -181,7 +227,7 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,Var = TRUE, Cor = TRU
 
   stoprdsm(c)
 
-  x <- list(Values = as.matrix(WVC),Observations = nc1+nc2, Vars = NVar, Cors = NCor, NLevels = lev, filter = f, importance = vector("numeric"))
+  x <- list(Var = as.matrix(Var), Cor = as.matrix(Cor), IQR = as.matrix(IQR), DM = as.matrix(DM), PE = as.matrix(PE), Observations = nc1+nc2, NLevels = lev, filter = f)
   attr(x,"class") <- "WaveAnalisys"
   return(x)
 }
@@ -217,18 +263,26 @@ chooseLevel <- function (choice,f,N) {
     J0 <- floor(log2(1.5 * N))
     return(J0 - 1)
   }
-  simpleError("selected choice its not valid")
+  stop(paste(c("selected choice",choice,"its not valid")))
 }
 
 extractSubset <- function(MWA,x){
   n <- length(x)
+
   MWA1 <- MWA
-  MWA1$Values <- MWA1$Values[,x]
   MWA1$Observations <- n
 
   MWA2 <- MWA
-  MWA2$Values <- MWA2$Values[,-x]
   MWA2$Observations <- MWA2$Observations - n
+
+  for (feature in getAllFeatures()) {
+    if (!all(is.na(MWA1[[feature]]))){
+      MWA1[[feature]] <- MWA1[[feature]][,x]
+      MWA2[[feature]] <- MWA2[[feature]][,-x]
+    }
+  }
+
+
   return(list(MWA1,MWA2))
 
 }
@@ -258,6 +312,25 @@ avaibleFilters <- function(){
           mb24")
 }
 
+computeIQR <- function(X) {
+  aux <- head(X,-1)
+  return (unlist(lapply(aux, function(x) IQR(x))))
+}
+
+computePermutationEntropy <- function(X) {
+  aux <- head(X,-1)
+  return (unlist(lapply(aux, function(x) permutation_entropy(ordinal_pattern_distribution(x,6)))))
+}
+
+computeDMeasure <- function(X,Y) {
+  X <- head(X,-1)
+  Y <- head(Y,-1)
+  return (mapply(function(x,y) wdm(x,y,"hoeffding"),X,Y))
+}
+
+
+
+#' @export
 print.WaveAnalisys <- function (x) {
   print(paste("The number of correlation variables are",x$Cors))
   print(paste("The number of varianze variables are",x$Vars))
@@ -265,4 +338,19 @@ print.WaveAnalisys <- function (x) {
   print(paste("The number of levels are", x$NLevels))
 }
 
+#' @export
+values <- function(MWA){
+  stopifnot(class(MWA) == "WaveAnalisys")
+  values <- matrix(0,nrow = 0,ncol = MWA$Observations)
+  for (feature in getAllFeatures()){
+    if(!all(is.na(MWA[[feature]]))) {
+      values <- rbind(values,as.matrix(MWA[[feature]]))
+    }
+  }
+  return(values)
+}
 
+#' @export
+getAllFeatures <- function(){
+  return (c("Var","Cor","IQR","PE","DM"))
+}

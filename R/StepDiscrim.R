@@ -21,7 +21,7 @@ Desing <- function (grp){
 
 #' @importFrom MASS ginv
 Lawley <- function (X,grps) {
-  print(X)
+  # print(X)
   if (is.vector(X)){
     nobs<- length(X)
     p <- 1
@@ -30,7 +30,6 @@ Lawley <- function (X,grps) {
     nobs <- dim(X)[1]
     p <- dim(X)[2]
     means <- colMeans(X)
-    print(X)
   }
 
   G <- Desing(grps)
@@ -47,8 +46,8 @@ Lawley <- function (X,grps) {
   rcond_W <- rcond(W)
 
   if (rcond_W < 1e-8){
-    V <- NaN
-    Vp <- NaN
+    V <- 0
+    Vp <- 0
   } else {
     invW <- solve(W)
     V <- sum(diag(B %*% invW))
@@ -90,7 +89,13 @@ StepDiscrim_ <- function (X,grps,maxvars,nCores) {
     mgrmakevar(c,"Vs",nvni,1)
     mgrmakevar(c,"Vps",nvni,1)
     clusterExport(c,c("vi","vni","grps","nvni"), envir = environment())
-    clusterExport(c,c("Lawley","ginv"))
+    clusterExport(c,c("Lawley","ginv","Desing"))
+
+    # for (v in 1:nvni) {
+    #   aux <- Lawley(Xs[,c(vi,vni[v])],grps)
+    #   Vs[v] <- aux[[1]]
+    #   Vps[v] <- aux[[2]]
+    # }
 
     clusterEvalQ(c,{
       ids <-getidxs(nvni)
@@ -218,51 +223,43 @@ StepDiscrimV_ <- function(X,grps,VStep,nCores) {
 #'
 #' @export
 #'
-StepDiscrim <- function (WVC,grps,maxvars,Var = TRUE, Cor = TRUE, nCores = 0) {
+StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","DM"), nCores = 0, pos=FALSE) {
   stopifnot(class(WVC) == "WaveAnalisys")
-  NVar <- WVC$Vars
-  NCor <- WVC$Cors
 
-  if (Var & NVar<=0){
-    simpleError("The provided analysis does not contain the variances")
-  }
-
-  if (Cor & NCor<=0){
-    simpleError("The analysis provided does not contain correlations.")
+  Tr <- matrix(0,nrow = 0,ncol = WVC$Observations)
+  for (feature in features) {
+    if (all(is.na(WVC[[feature]]))) {
+      stop(paste("The provided analysis does not contain",feature))
+    } else {
+      Tr <- rbind(Tr,WVC[[feature]])
+    }
   }
 
   if (nCores == 0) {
     nCores <- detectCores() - 1
   }
 
-  rv <- WVC[[1]]
-  if (Var & Cor) {
-    Tr <- rv[1:(NVar + NCor),]
-  } else if (Var) {
-    Tr <- rv[1:NVar,]
-  } else if (Cor){
-    if (NVar>0){
-      Tr <- rv[(NVar + 1):(NVar + NCor),]
-      NVar <- 0
-    } else {
-      Tr <- rv[1:NCor,]
-    }
-  }
-
   incl <- StepDiscrim_(t(Tr),grps,maxvars,nCores)[[1]]
   inclSorted <- sort(incl, index.return = TRUE)
-  WVC[[1]] <- Tr[inclSorted$x,]
-  WVC$Vars <- length(which(incl<NVar))
-  WVC$Cors <- length(incl) - WVC$Vars
 
-  importance <- rep(0,length(incl))
-  for (i in 1:length(incl)) {
-    importance[inclSorted$ix[i]] =  i
+  WVCAux <- list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA, Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
+  attr(WVCAux,"class") <- "WaveAnalisys"
+  acc <- 1
+  for (feature in features) {
+    size <- dim(WVC[[feature]])[1]
+    upperLimit <- acc + size - 1
+    aux <- which(incl > acc & incl < upperLimit)
+    index <- sapply(incl[aux],function(x) x - (acc - 1))
+    WVCAux[[feature]] <- WVC[[feature]][index,]
+    acc <- upperLimit + 1
   }
 
 
-  WVC$importance <- importance
-  return(WVC)
+  if(pos) {
+    return(list(Tr,incl))
+  }
+
+  return(WVCAux)
 }
 
 #' Stepwise discriminant
@@ -284,48 +281,37 @@ StepDiscrim <- function (WVC,grps,maxvars,Var = TRUE, Cor = TRUE, nCores = 0) {
 #'
 #' @export
 #'
-StepDiscrimV <- function (WVC,grps,VStep,Var = TRUE, Cor = TRUE, nCores = 0) {
+StepDiscrimV <- function (WVC,grps,VStep,features = c("Var","Cor","IQR","PE","DM"), nCores = 0) {
   stopifnot(class(WVC) == "WaveAnalisys")
-  NVar <- WVC$Vars
-  NCor <- WVC$Cors
 
-  # TODO TESTING
-  if (Var & NVar<=0){
-    simpleError("The provided analysis does not contain the variances")
-  }
-
-  if (Cor & NCor<=0){
-    simpleError("The analysis provided does not contain correlations.")
-  }
-
-  if (nCores == 0) {
-    nCores <- detectCores() -1
-  }
-
-  rv <- WVC[[1]]
-  if (Var & Cor) {
-    Tr <- rv[1:(NVar + NCor),]
-  } else if (Var) {
-    Tr <- rv[1:NVar,]
-  } else if (Cor){
-    if (NVar>0){
-      Tr <- rv[NVar:(NVar + NCor),]
+  Tr <- matrix(0,nrow = 0,ncol = WVC$Observations)
+  for (feature in features) {
+    if (all(is.na(WVC[[feature]]))) {
+      stop(paste("The provided analysis does not contain",feature))
     } else {
-      Tr <- rv[1:NCor,]
+      Tr <- rbind(Tr,WVC[[feature]])
     }
   }
 
-  incl <- StepDiscrimV_(t(Tr),grps,VStep,nCores)[[1]]
-  inclSorted <- sort(incl, index.return = TRUE)
-  WVC[[1]] <- Tr[inclSorted$x,]
-  WVC$Vars <- length(which(incl<NVar))
-  WVC$Cors <- length(incl) - WVC$Vars
-
-  importance <- rep(0,length(incl))
-  for (i in 1:length(incl)) {
-    importance[inclSorted$ix[i]] =  i
+  if (nCores == 0) {
+    nCores <- detectCores() - 1
   }
 
-  WVC$importace <- importance
-  return(WVC)
+  incl <- StepDiscrimV_(t(Tr),grps,maxvars,nCores)[[1]]
+  inclSorted <- sort(incl, index.return = TRUE)
+
+  WVCAux <- list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA, Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
+  attr(WVCAux,"class") <- "WaveAnalisys"
+  acc <- 1
+  for (feature in features) {
+    size <- dim(WVC[[feature]])[1]
+    upperLimit <- acc + size - 1
+    aux <- which(incl > acc & incl < upperLimit)
+    index <- sapply(incl[aux],function(x) x - (acc - 1))
+    WVCAux[[feature]] <- WVC[[feature]][index,]
+    acc <- upperLimit + 1
+  }
+
+
+  return(WVCAux)
 }

@@ -9,6 +9,7 @@ testFilters(
   XSeries2,
   var,
   filters = c("haar", "d4", "d6", "d8", "la8"),
+  features = c("Var", "Cor", "IQR", "PE", "DM"),
   lev = 0
 )
 }

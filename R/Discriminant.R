@@ -17,28 +17,8 @@ testModel <- function (model,test,Tgroups) {
   return(CM)
 }
 
-LOOCV <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, Var = TRUE, Cor = TRUE) {
-  if (missing(maxvars) && missing(Vstep)){
-    simpleError("maxvars o Vstep must be defined")
-  }
-  if (!missing(maxvars) && !missing(Vstep)){
-    simpleError("only maxvars or Vstep can be defined.")
-  }
-  if (!missing(maxvars) && maxVars < 0) {
-    SimpleError("maxVars must be >0")
-  }
-  if (!missing(Vstep && Vstep <0)){
-    simpleError("Vstep must be >0")
-  }
-
-  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,XSeries2[[3]],1))
-  MWA <- MultiVaweAnalisys(Xeries1,Xseries2,f,lev,VAR,COR)
-  if (!missing(maxvars)){
-    MWA <- StepDiscrim(MWA,grps,maxvars,Var,Cor)
-  } else {
-    MWA <- StepDiscrimV(MWA,grps,VStep,Var,Cor)
-  }
-
+LOOCV <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0,features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+  generateStepDiscrimWMA(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
   return(LOOCV(MWA,grps,method))
 }
 
@@ -84,6 +64,8 @@ LOOCV <- function(MWA,grps,method) {
 #' A vector containing one confusion matrix object for each group
 #' @export
 #'
+#'
+# TODO--------- MWA$Values to values.
 KFCV <- function(MWA,grps,method,k, seed = 10){
   stopifnot(class(MWA) == "WaveAnalisys")
   set.seed(seed)
@@ -141,28 +123,8 @@ KFCV <- function(MWA,grps,method,k, seed = 10){
 #' * \code{\link{StepDiscrimV}}
 #' @md
 
-trainModelData <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, Var = TRUE, Cor = TRUE) {
-  if (missing(maxvars) && missing(Vstep)){
-    simpleError("maxvars o Vstep must be defined")
-  }
-  if (!missing(maxvars) && !missing(Vstep)){
-    simpleError("only maxvars or Vstep can be defined.")
-  }
-  if (!missing(maxvars) && maxvars < 0) {
-    simpleError("maxVars must be >0")
-  }
-  if (!missing(Vstep && Vstep <0)){
-    simpleError("Vstep must be >0")
-  }
-
-  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,XSeries2[[3]],1))
-  MWA <- MultiVaweAnalisys(XSeries1,XSeries2,f,lev,Var,Cor)
-  if (!missing(maxvars)){
-    MWA <- StepDiscrim(MWA,grps,maxvars,Var,Cor)
-  } else {
-    MWA <- StepDiscrimV(MWA,grps,Vstep,Var,Cor)
-  }
-
+trainModelData <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+  generateStepDiscrimWMA(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
   return (trainModelMWA(MWA,grps,method))
 
 }
@@ -179,12 +141,13 @@ trainModelData <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, l
 #' @importFrom MASS lda qda
 trainModelMWA <- function (MWA,groups,method) {
   stopifnot(class(MWA) == "WaveAnalisys")
+  values = values(MWA)
   if (method == "linear"){
-    model <- lda(t(MWA$Values),groups)
+    model <- lda(t(values),groups)
   } else if (method == "quadratic"){
-    model <- qda(t(MWA$Values),groups)
+    model <- qda(t(values),groups)
   } else{
-    simpleError ("Method not supported")
+    stop (paste(c("Method",method ,"not supported")))
   }
   return(model)
 }
@@ -195,5 +158,6 @@ classify <- function (model,data) {
   stopifnot(class(data) == "WaveAnalisys")
   stopifnot(class(model) == "lda" || class(model) =="qda")
 
-  return(model %>% predict(data$Values))
+  values = values(data)
+  return(predict(model,t(values)))
 }
