@@ -3,23 +3,88 @@
 # Created by: ivan
 # Created on: 8/4/21
 
+#' @export
+testModel <- function(x,...) {
+  UseMethod("testModel")
+}
+#' @export
+testModel.WaveAnalisys <- function (train,test,grps,method, returnClassification = FALSE) {
+  if (missing(train)) {
+    stop("\"train\" must be provided. \"train\" must be an object of class WaveAnalisys")
+  }
+  if (missing(test)) {
+    stop("\"test\" must be provided. \"test\" must be an object of class WaveAnalisys")
+  }
+  if (missing(grps)) {
+    stop("\"grps\" must be provided.")
+  }
+  if (missing(method)) {
+    stop("\"method\" must be provided. The avaiable options are \"linear\" or \"quadratic\"")
+  }
 
-testModel <- function (train,test,Tgroups,method) {
-  model <- trainModel(train,Tgroups,method)
+  stopifnot(class(train) == "WaveAnalisys",
+            class(test) == "WaveAnalisys")
+
+
+  model <- trainModel(train,grps,method)
   prediction <- classify(model,test)
-  CM <- confusionMatrix(as.factor(prediction[[1]]),as.factor(Tgroups))
+  CM <- confusionMatrix(as.factor(prediction[[1]]),as.factor(grps))
+
+  if (returnClassification) {
+    return(list("CM" = CM, "Clasification" = prediction[[1]]))
+  }
+
+  return(CM)
+}
+#' @export
+testModel.lda <- function (model,test,grps,returnClassification = FALSE) {
+  stopifnot(!missing(model),
+            !missing(test),
+            !missing(grps),
+            class(model) == "lda" || class(model) == "qda"
+            )
+
+  prediction <- classify(model,test)
+  CM <- confusionMatrix(as.factor(prediction[[1]]),as.factor(grps))
+
+  if (returnClassification) {
+    return(list("CM" = CM, "Clasification" = prediction[[1]]))
+  }
+
   return(CM)
 }
 
-testModel <- function (model,test,Tgroups) {
-  prediction <- classify(model,test)
-  CM <- confusionMatrix(as.factor(prediction[[1]]),as.factor(Tgroups))
-  return(CM)
+#' @export
+testModel.qda <- function (model,test,grps,returnClassification = FALSE) {
+  testModel.lda(model,test,grps,returnClassification)
 }
 
-LOOCV <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0,features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
-  generateStepDiscrimWMA(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
-  return(LOOCV(MWA,grps,method))
+#' @export
+LOOCV <- function(x,...){
+  UseMethod("LOOCV")
+}
+
+#' @export
+LOOCV.array <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0,features = c("Var","Cor","IQR","PE","DM"),returnClassification = FALSE,nCores = 0) {
+  if (missing(XSeries1)) {
+    stop("XSeries1 must be provided")
+  }
+
+  if (missing(XSeries2)) {
+    stop("XSeries2 must be provided")
+  }
+
+  if(missing(f)) {
+    stop("The parameter \"f\" (filter) must be defined. To see the avaiable filters use avaibleFilters function")
+  }
+
+  if (missing(method)){
+    stop("The parameter \"method\" must be defined. The avaiable  methods are \"linear\" and \"quadratic\"")
+  }
+
+  MWA <- generateStepDiscrim(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
+  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
+  return(LOOCV(MWA,grps,method,returnClassification))
 }
 
 #' LOOCV
@@ -33,7 +98,7 @@ LOOCV <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0,fe
 #' @export
 #'
 #' @importFrom caret confusionMatrix
-LOOCV <- function(MWA,grps,method) {
+LOOCV.WaveAnalisys <- function(MWA,grps,method, returnClassification = FALSE) {
   stopifnot(class(MWA) == "WaveAnalisys")
   n <- MWA$Observations
   class <- vector("numeric",n)
@@ -42,11 +107,16 @@ LOOCV <- function(MWA,grps,method) {
     MWATest <- aux[[1]]
     MWATrain <- aux[[2]]
     grpsT <-grps[-i]
-    model <- trainModelMWA(MWATrain,grpsT,method)
+    model <- trainModel(MWATrain,grpsT,method)
     class[i] <- classify(model, MWATest)[[1]]
   }
+  CM <- confusionMatrix(as.factor(class),as.factor(grps))
 
-  return (confusionMatrix(as.factor(class),as.factor(grps)))
+  if (returnClassification) {
+    return(list("CM" = CM, "classification" = class))
+  }
+
+  return (CM)
 }
 
 #' KFCV
@@ -82,7 +152,7 @@ KFCV <- function(MWA,grps,method,k, seed = 10){
     MWATest <- aux[[1]]
     MWATrain <- aux[[2]]
     grpsT <- reorderGrps[-c(n:m)]
-    model <- trainModelMWA(MWATrain,grpsT,method)
+    model <- trainModel(MWATrain,grpsT,method)
     class <- classify(model,MWATest)[[1]]
     CMvector <- append(CMvector,confusionMatrix(as.factor(class), as.factor(reorderGrps[n:m])))
     n <- n + k
@@ -90,6 +160,10 @@ KFCV <- function(MWA,grps,method,k, seed = 10){
     m <- max(m,nobs)
   }
   return(CMvector)
+}
+
+trainModel <- function(x, ...) {
+  UseMethod("trainModel")
 }
 
 #' Train model
@@ -123,9 +197,10 @@ KFCV <- function(MWA,grps,method,k, seed = 10){
 #' * \code{\link{StepDiscrimV}}
 #' @md
 
-trainModelData <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
-  generateStepDiscrimWMA(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
-  return (trainModelMWA(MWA,grps,method))
+trainModel.array <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+  MWA <- generateStepDiscrim(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
+  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
+  return (trainModel(MWA,grps,method))
 
 }
 #' train Model
@@ -139,7 +214,7 @@ trainModelData <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, l
 #' @export
 #'
 #' @importFrom MASS lda qda
-trainModelMWA <- function (MWA,groups,method) {
+trainModel.WaveAnalisys <- function (MWA,groups,method) {
   stopifnot(class(MWA) == "WaveAnalisys")
   values = values(MWA)
   if (method == "linear"){

@@ -63,7 +63,7 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
   }
 
   #set parallel enviorement
-  c <- makeCluster(nCores) #TODO cambiar
+  c <- makeCluster(nCores)
   mgrinit(c)
   makebarr(c)
 
@@ -102,8 +102,7 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
   barr()
   })
 
-
-  NVar <- if(HVar) nv1 * lev else 0
+  NVar <- nv1 * lev
   if (HCor || HDM) {
     NbK <- combn(1:nv1,2)
     NumberNbK <- dim(NbK)[2]
@@ -143,14 +142,11 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
     DM = NA
   }
 
-
   clusterEvalQ (c, {
     ids <- getidxs(nc1)
     for (i in ids){
       WJ <- list()
-      print(i)
       for (j in 1:nv1){
-        print(j)
         aux = D3toD2(j,,i,nv1,nr1,nc1)
         Vtemporal <- YSeries1[aux[[1]],aux[[2]][[1]]:aux[[2]][[2]]]
         aux.modwt <- modwt(Vtemporal,f,lev)
@@ -173,9 +169,11 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
       if (HCor || HDM) {
         for (k in 1:NumberNbK) {
           if (HCor){
-            WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
-            Cor[((k-1)*lev + 1):(k * lev),i] <- WCOR[1:lev,1]
-          }
+            e1 <- NbK[1,k]
+            e2 <- NbK[2,k]
+              WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
+              Cor[((k-1)*lev + 1):(k * lev),i] <- WCOR[1:lev,1]
+            }
           if (HDM) {
             WDM <- computeDMeasure(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]])
             DM[((k-1)*lev + 1):(k * lev),i] <- WDM
@@ -212,6 +210,8 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
       if (HCor || HDM) {
         for (k in 1:NumberNbK) {
           if (HCor){
+            e1 <- NbK[1,k]
+            e2 <- NbK[2,k]
             WCOR <- suppressWarnings(wave.correlation(WJ[[NbK[1,k]]],WJ[[NbK[2,k]]],nr1))
             Cor[((k-1)*lev + 1):(k * lev),i] <- WCOR[1:lev,1]
           }
@@ -227,7 +227,7 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
 
   stoprdsm(c)
 
-  x <- list(Var = as.matrix(Var), Cor = as.matrix(Cor), IQR = as.matrix(IQR), DM = as.matrix(DM), PE = as.matrix(PE), Observations = nc1+nc2, NLevels = lev, filter = f)
+  x <- list(Features = list(Var = as.matrix(Var), Cor = as.matrix(Cor), IQR = as.matrix(IQR), DM = as.matrix(DM), PE = as.matrix(PE)), Observations = nc1+nc2, NLevels = lev, filter = f)
   attr(x,"class") <- "WaveAnalisys"
   return(x)
 }
@@ -275,41 +275,49 @@ extractSubset <- function(MWA,x){
   MWA2 <- MWA
   MWA2$Observations <- MWA2$Observations - n
 
-  for (feature in getAllFeatures()) {
-    if (!all(is.na(MWA1[[feature]]))){
-      MWA1[[feature]] <- MWA1[[feature]][,x]
-      MWA2[[feature]] <- MWA2[[feature]][,-x]
+  for (feature in names(MWA$Features)) {
+    if ( !(is.na(MWA$Features[[feature]][1])) ){
+      if ( dim(MWA$Features[[feature]])[1] == 1){
+        MWA1$Features[[feature]] <- t(as.matrix(MWA1$Features[[feature]][,x]))
+        MWA2$Features[[feature]] <- t(as.matrix(MWA2$Features[[feature]][,-x]))
+      } else {
+        MWA1$Features[[feature]] <- MWA1$Features[[feature]][,x]
+        MWA2$Features[[feature]] <- MWA2$Features[[feature]][,-x]
+      }
     }
   }
+
+# -------------------------------------------------------------------------
+
 
 
   return(list(MWA1,MWA2))
 
 }
 
-avaibleFilters <- function(){
-  print("Avaible filters:
-          harr
-          d4
-          mb4
-          w4
-          bs3
-          fk4
-          d6
-          fk6
-          d8
-          fk8
-          la8
-          mb8
-          bl14
-          fk14
-          d16
-          la16
-          mb16
-          la20
-          bl20
-          fk22
-          mb24")
+availableFilters <- function(){
+  writeLines("Avaible filters:
+          - harr
+          - d4
+          - mb4
+          - w4
+          - bs3
+          - fk4
+          - d6
+          - fk6
+          - d8
+          - fk8
+          - la8
+          - mb8
+          - bl14
+          - fk14
+          - d16
+          - la16
+          - mb16
+          - la20
+          - bl20
+          - fk22
+          - mb24")
 }
 
 computeIQR <- function(X) {
@@ -342,9 +350,9 @@ print.WaveAnalisys <- function (x) {
 values <- function(MWA){
   stopifnot(class(MWA) == "WaveAnalisys")
   values <- matrix(0,nrow = 0,ncol = MWA$Observations)
-  for (feature in getAllFeatures()){
-    if(!all(is.na(MWA[[feature]]))) {
-      values <- rbind(values,as.matrix(MWA[[feature]]))
+  for (feature in MWA$Features) {
+    if(!(is.na(feature[1]))) {
+      values <- rbind(values,as.matrix(feature))
     }
   }
   return(values)

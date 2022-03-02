@@ -7,7 +7,7 @@
 testFilters(
   XSeries1,
   XSeries2,
-  var,
+  maxvars,
   filters = c("haar", "d4", "d6", "d8", "la8"),
   features = c("Var", "Cor", "IQR", "PE", "DM"),
   lev = 0
@@ -18,9 +18,9 @@ testFilters(
 
 \item{XSeries2}{Samples from the population 2 (dim x length x cases)}
 
-\item{var}{Maximum number of selectable variables by stepwise discriminant}
+\item{maxvars}{Maximum number of selectable variables by stepwise discriminant}
 
-\item{filters}{Vector que contiene los filtros a probar. Para ver los filtros disponibles ejecuta avaibleFilters()}
+\item{filters}{Vector que contiene los filtros a probar. Para ver los filtros disponibles ejecuta availableFilters()}
 
 \item{lev}{Wavelet descomposition level, by default is selcted using the "conservative" strategy. See \code{\link{chooseLevel}} function.}
 }

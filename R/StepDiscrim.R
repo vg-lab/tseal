@@ -228,10 +228,10 @@ StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","D
 
   Tr <- matrix(0,nrow = 0,ncol = WVC$Observations)
   for (feature in features) {
-    if (all(is.na(WVC[[feature]]))) {
+    if (all(is.na(WVC$Features[[feature]]))) {
       stop(paste("The provided analysis does not contain",feature))
     } else {
-      Tr <- rbind(Tr,WVC[[feature]])
+      Tr <- rbind(Tr,WVC$Features[[feature]])
     }
   }
 
@@ -242,15 +242,19 @@ StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","D
   incl <- StepDiscrim_(t(Tr),grps,maxvars,nCores)[[1]]
   inclSorted <- sort(incl, index.return = TRUE)
 
-  WVCAux <- list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA, Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
+  WVCAux <- list(Features = list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
   attr(WVCAux,"class") <- "WaveAnalisys"
   acc <- 1
   for (feature in features) {
-    size <- dim(WVC[[feature]])[1]
+    size <- dim(WVC$Features[[feature]])[1]
     upperLimit <- acc + size - 1
     aux <- which(incl > acc & incl < upperLimit)
     index <- sapply(incl[aux],function(x) x - (acc - 1))
-    WVCAux[[feature]] <- WVC[[feature]][index,]
+    if ( length(index) == 1 ) {
+      WVCAux$Features[[feature]] <- t(as.matrix(WVC$Features[[feature]][index,]))
+    } else {
+      WVCAux$Features[[feature]] <- WVC$Features[[feature]][index,]
+    }
     acc <- upperLimit + 1
   }
 
@@ -286,10 +290,10 @@ StepDiscrimV <- function (WVC,grps,VStep,features = c("Var","Cor","IQR","PE","DM
 
   Tr <- matrix(0,nrow = 0,ncol = WVC$Observations)
   for (feature in features) {
-    if (all(is.na(WVC[[feature]]))) {
+    if (all(is.na(WVC$Features[[feature]]))) {
       stop(paste("The provided analysis does not contain",feature))
     } else {
-      Tr <- rbind(Tr,WVC[[feature]])
+      Tr <- rbind(Tr,WVC$Features[[feature]])
     }
   }
 
@@ -300,15 +304,19 @@ StepDiscrimV <- function (WVC,grps,VStep,features = c("Var","Cor","IQR","PE","DM
   incl <- StepDiscrimV_(t(Tr),grps,maxvars,nCores)[[1]]
   inclSorted <- sort(incl, index.return = TRUE)
 
-  WVCAux <- list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA, Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
+  WVCAux <- list(Features = list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
   attr(WVCAux,"class") <- "WaveAnalisys"
   acc <- 1
   for (feature in features) {
-    size <- dim(WVC[[feature]])[1]
+    size <- dim(WVC$Features[[feature]])[1]
     upperLimit <- acc + size - 1
     aux <- which(incl > acc & incl < upperLimit)
     index <- sapply(incl[aux],function(x) x - (acc - 1))
-    WVCAux[[feature]] <- WVC[[feature]][index,]
+    if ( length(index) == 1 ) {
+      WVCAux$Features[[feature]] <- t(as.matrix(WVC$Features[[feature]][index,]))
+    } else {
+      WVCAux$Features[[feature]] <- WVC$Features[[feature]][index,]
+    }
     acc <- upperLimit + 1
   }
 

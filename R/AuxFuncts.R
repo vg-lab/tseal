@@ -36,26 +36,26 @@ D3toD2 <- function(i,j,k,nRows,nCols,nPages) {
   return (list( k,list(i*nCols + j,i*nCols + j)))
 }
 
-generateStepDiscrimWMA <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+generateStepDiscrim <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
   if (missing(maxvars) && missing(Vstep)){
     stop("maxvars o Vstep must be defined")
   }
-  if (!missing(maxvars) && !missing(Vstep)){
+  if ((!missing(maxvars) && maxvars != 0) && (!missing(Vstep) && Vstep != 0)){
     stop("only maxvars or Vstep can be defined.")
   }
   if (!missing(maxvars) && maxvars < 0) {
     stop("maxVars must be >0")
   }
-  if (!missing(Vstep && Vstep <0)){
+  if (!missing(Vstep) && Vstep <0){
     stop("Vstep must be >0")
   }
 
-  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,XSeries2[[3]],1))
-  MWA <- MultiVaweAnalisys(XSeries1,XSeries2,f,lev,Var,Cor)
+  grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
+  MWA <- MultiVaweAnalisys(XSeries1,XSeries2,f,lev,features,nCores)
   if (!missing(maxvars)){
-    MWA <- StepDiscrim(MWA,grps,maxvars,Var,Cor)
+    MWA <- StepDiscrim(MWA,grps,maxvars,features,nCores)
   } else {
-    MWA <- StepDiscrimV(MWA,grps,Vstep,Var,Cor)
+    MWA <- StepDiscrimV(MWA,grps,Vstep,features,nCores)
   }
 
   return(MWA)
@@ -73,8 +73,8 @@ generateStepDiscrimWMA <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vste
 #'
 #' @param XSeries1 Samples from the population 1 (dim x length x cases)
 #' @param XSeries2 Samples from the population 2 (dim x length x cases)
-#' @param var Maximum number of selectable variables by stepwise discriminant
-#' @param filters Vector que contiene los filtros a probar. Para ver los filtros disponibles ejecuta avaibleFilters()
+#' @param maxvars Maximum number of selectable variables by stepwise discriminant
+#' @param filters Vector que contiene los filtros a probar. Para ver los filtros disponibles ejecuta availableFilters()
 #' @param lev Wavelet descomposition level, by default is selcted using the "conservative" strategy. See \code{\link{chooseLevel}} function.
 #'
 #' @return A list that each element contains:
@@ -93,7 +93,23 @@ generateStepDiscrimWMA <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vste
 #' * \code{\link{StepDiscrim}}
 #'
 #' @md
-testFilters <- function(XSeries1,XSeries2,var,filters = c("haar","d4","d6","d8","la8"),features = c("Var","Cor","IQR","PE","DM"),lev = 0) { #change maxvars for vector, and add a vector of filters.
+testFilters <- function(XSeries1,XSeries2,maxvars,filters = c("haar","d4","d6","d8","la8"),features = c("Var","Cor","IQR","PE","DM"),lev = 0) {
+  if (missing(XSeries1)) {
+    stop("XSeries1 must be provided")
+  }
+  if (missing(XSeries2)){
+    stop("XSeries2 must be provided")
+  }
+  if (missing(maxvars)) {
+    stop("maxvars must be provided")
+  }
+  if (is.empty(filters)) {
+    stop("At least one filter must be provided. To see the available filters use the availableFilters function.")
+  }
+  if (is.empty(features)) {
+    stop("At least one feature must be provided. To see the available filters use the availableFeatures function.")
+  }
+
   data <- list()
   grps <- rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
   nFeatures <- length(features)
@@ -106,11 +122,11 @@ testFilters <- function(XSeries1,XSeries2,var,filters = c("haar","d4","d6","d8",
       listFeatures <- split(comFeatures, rep(1:ncol(comFeatures), each = nrow(comFeatures)))
       for (cFeatures in listFeatures){
         print(cFeatures)
-        aux <- StepDiscrim(MWA,grps,var,cFeatures,pos=TRUE)
+        aux <- StepDiscrim(MWA,grps,maxvars,cFeatures,pos=TRUE)
         Tr <- aux[[1]]
         incl <- aux[[2]]
         print("Validation")
-        maxVar <- min(var,length(incl))
+        maxVar <- min(maxvars,length(incl))
         for (v in 2:maxVar){
           print(v)
           filterValues <- Tr[incl[1:v],]
@@ -123,4 +139,17 @@ testFilters <- function(XSeries1,XSeries2,var,filters = c("haar","d4","d6","d8",
     }
   }
   return(data)
+}
+
+availableFeatures <- function() {
+  writeLines("available features:
+          - Variance (Var)
+          - Correlation (Cor)
+          - Interquartile range (IQR)
+          - Permutation Entropy (PE)
+          - Hoefflin’s D measure (D)
+
+          Example:
+          c(\"Var\",\"PE\")
+        ")
 }
