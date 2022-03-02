@@ -5,7 +5,8 @@
 
 #' @importFrom utils read.csv
 #' @importFrom abind abind
-read_data <- function (infile,header) {
+read_data <- function (infile,header = TRUE) {
+  if (missing(infile)) stop("\"infile must be provided\"")
   files <- list.files(infile, full.names = TRUE)
 
   data <- read.csv(files[1], header = header)
@@ -37,6 +38,11 @@ D3toD2 <- function(i,j,k,nRows,nCols,nPages) {
 }
 
 generateStepDiscrim <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+  if (missing(XSeries1)) stop("XSeries1 must be provided.")
+  if (missing(XSeries2)) stop("XSeries2 must be provided.")
+  if (missing(f)) stop("f must be provided. To see available filter use availableFilters()")
+  if (missing(method)) stop("method must be provided. The available options are \"linear\" and \"quadratic\"")
+
   if (missing(maxvars) && missing(Vstep)){
     stop("maxvars o Vstep must be defined")
   }
@@ -94,21 +100,11 @@ generateStepDiscrim <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep =
 #'
 #' @md
 testFilters <- function(XSeries1,XSeries2,maxvars,filters = c("haar","d4","d6","d8","la8"),features = c("Var","Cor","IQR","PE","DM"),lev = 0) {
-  if (missing(XSeries1)) {
-    stop("XSeries1 must be provided")
-  }
-  if (missing(XSeries2)){
-    stop("XSeries2 must be provided")
-  }
-  if (missing(maxvars)) {
-    stop("maxvars must be provided")
-  }
-  if (is.empty(filters)) {
-    stop("At least one filter must be provided. To see the available filters use the availableFilters function.")
-  }
-  if (is.empty(features)) {
-    stop("At least one feature must be provided. To see the available filters use the availableFeatures function.")
-  }
+  if (missing(XSeries1)) stop("XSeries1 must be provided")
+  if (missing(XSeries2)) stop("XSeries2 must be provided")
+  if (missing(maxvars)) stop("maxvars must be provided")
+  if (is.empty(filters)) stop("At least one filter must be provided. To see the available filters use the availableFilters()")
+  if (is.empty(features)) stop("At least one feature must be provided. To see the available filters use the availableFeatures()")
 
   data <- list()
   grps <- rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))

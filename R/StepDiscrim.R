@@ -209,7 +209,7 @@ StepDiscrimV_ <- function(X,grps,VStep,nCores) {
 #'
 #' Based on StepDiscrim of R.E. Strauss
 #'
-#' @param WVC WaveAnalisys object obtained with MultiVaweAnalisys function
+#' @param MWA WaveAnalisys object obtained with MultiVaweAnalisys function
 #' @param grps labeled vector that classify the observations.
 #' @param maxvars The number of desired values.
 #' @param Var Determines if the algorithm take in account the variances.
@@ -223,15 +223,19 @@ StepDiscrimV_ <- function(X,grps,VStep,nCores) {
 #'
 #' @export
 #'
-StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","DM"), nCores = 0, pos=FALSE) {
-  stopifnot(class(WVC) == "WaveAnalisys")
+StepDiscrim <- function (MWA,grps,maxvars,features = c("Var","Cor","IQR","PE","DM"), nCores = 0, pos=FALSE) {
+  if (missing(MWA)) stop("The argument \"MWA\" must be provided.")
+  if (missing(grps)) stop("The agument \"grps\" must be defined.")
+  if (missing(maxvars) || maxvars <= 0) stop("The argument \"maxvars\" must be provided and must be grater than 0" )
 
-  Tr <- matrix(0,nrow = 0,ncol = WVC$Observations)
+  stopifnot(class(MWA) == "WaveAnalisys")
+
+  Tr <- matrix(0,nrow = 0,ncol = MWA$Observations)
   for (feature in features) {
-    if (all(is.na(WVC$Features[[feature]]))) {
+    if (all(is.na(MWA$Features[[feature]]))) {
       stop(paste("The provided analysis does not contain",feature))
     } else {
-      Tr <- rbind(Tr,WVC$Features[[feature]])
+      Tr <- rbind(Tr,MWA$Features[[feature]])
     }
   }
 
@@ -242,18 +246,18 @@ StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","D
   incl <- StepDiscrim_(t(Tr),grps,maxvars,nCores)[[1]]
   inclSorted <- sort(incl, index.return = TRUE)
 
-  WVCAux <- list(Features = list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
-  attr(WVCAux,"class") <- "WaveAnalisys"
+  MWAAux <- list(Features = list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = MWA$Observations, NLevels = MWA$NLevels, filter = MWA$filter)
+  attr(MWAAux,"class") <- "WaveAnalisys"
   acc <- 1
   for (feature in features) {
-    size <- dim(WVC$Features[[feature]])[1]
+    size <- dim(MWA$Features[[feature]])[1]
     upperLimit <- acc + size - 1
     aux <- which(incl > acc & incl < upperLimit)
     index <- sapply(incl[aux],function(x) x - (acc - 1))
     if ( length(index) == 1 ) {
-      WVCAux$Features[[feature]] <- t(as.matrix(WVC$Features[[feature]][index,]))
+      MWAAux$Features[[feature]] <- t(as.matrix(MWA$Features[[feature]][index,]))
     } else {
-      WVCAux$Features[[feature]] <- WVC$Features[[feature]][index,]
+      MWAAux$Features[[feature]] <- MWA$Features[[feature]][index,]
     }
     acc <- upperLimit + 1
   }
@@ -263,7 +267,7 @@ StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","D
     return(list(Tr,incl))
   }
 
-  return(WVCAux)
+  return(MWAAux)
 }
 
 #' Stepwise discriminant
@@ -274,26 +278,30 @@ StepDiscrim <- function (WVC,grps,maxvars,features = c("Var","Cor","IQR","PE","D
 #'
 #' Based on StepDiscrim of R.E. Strauss
 #'
-#' @param WVC WaveAnalisys object obtained with MultiVaweAnalisys function
+#' @param MWA WaveAnalisys object obtained with MultiVaweAnalisys function
 #' @param grps labeled vector that classify the observations-
 #' @param VStep Determine the minimum value of V to continue adding new variables. Ex if an determinate step the maximum V is 0.2 but VStep is 0.3 the algorithm end.
 #' @param Var Determines if the algorithm take in account the variances. For use this option, the provided WaveAnalisys has to have variances
 #' @param Cor Determines if the algorithm take in account the correlations. For use this option, the provided WaveAnalisys has to have correlations
 #' @param nCores determines the number of processes that will be used in the function, by default it uses all but one of the system cores.
 #'
-#' @return A WaveAnalisys object with the maxvars most discriminant variables, and a importance vector that determines the importance order of the selected variables.
+#' @return A WaveAnalisys object with the most discriminant variables, and a importance vector that determines the importance order of the selected variables.
 #'
 #' @export
 #'
-StepDiscrimV <- function (WVC,grps,VStep,features = c("Var","Cor","IQR","PE","DM"), nCores = 0) {
-  stopifnot(class(WVC) == "WaveAnalisys")
+StepDiscrimV <- function (MWA,grps,VStep,features = c("Var","Cor","IQR","PE","DM"), nCores = 0) {
+  if (missing(MWA)) stop("The argument \"MWA\" must be provided.")
+  if (missing(grps)) stop("The agument \"grps\" must be defined.")
+  if (missing(VStep) || VStep <= 0) stop("The argument \"VStep\" must be provided and must be grater than 0" )
 
-  Tr <- matrix(0,nrow = 0,ncol = WVC$Observations)
+  stopifnot(class(MWA) == "WaveAnalisys")
+
+  Tr <- matrix(0,nrow = 0,ncol = MWA$Observations)
   for (feature in features) {
-    if (all(is.na(WVC$Features[[feature]]))) {
+    if (all(is.na(MWA$Features[[feature]]))) {
       stop(paste("The provided analysis does not contain",feature))
     } else {
-      Tr <- rbind(Tr,WVC$Features[[feature]])
+      Tr <- rbind(Tr,MWA$Features[[feature]])
     }
   }
 
@@ -304,22 +312,22 @@ StepDiscrimV <- function (WVC,grps,VStep,features = c("Var","Cor","IQR","PE","DM
   incl <- StepDiscrimV_(t(Tr),grps,maxvars,nCores)[[1]]
   inclSorted <- sort(incl, index.return = TRUE)
 
-  WVCAux <- list(Features = list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = WVC$Observations, NLevels = WVC$NLevels, filter = WVC$filter)
-  attr(WVCAux,"class") <- "WaveAnalisys"
+  MWAAux <- list(Features = list(Var = NA, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = MWA$Observations, NLevels = MWA$NLevels, filter = MWA$filter)
+  attr(MWAAux,"class") <- "WaveAnalisys"
   acc <- 1
   for (feature in features) {
-    size <- dim(WVC$Features[[feature]])[1]
+    size <- dim(MWA$Features[[feature]])[1]
     upperLimit <- acc + size - 1
     aux <- which(incl > acc & incl < upperLimit)
     index <- sapply(incl[aux],function(x) x - (acc - 1))
     if ( length(index) == 1 ) {
-      WVCAux$Features[[feature]] <- t(as.matrix(WVC$Features[[feature]][index,]))
+      MWAAux$Features[[feature]] <- t(as.matrix(MWA$Features[[feature]][index,]))
     } else {
-      WVCAux$Features[[feature]] <- WVC$Features[[feature]][index,]
+      MWAAux$Features[[feature]] <- MWA$Features[[feature]][index,]
     }
     acc <- upperLimit + 1
   }
 
 
-  return(WVCAux)
+  return(MWAAux)
 }

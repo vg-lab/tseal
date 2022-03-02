@@ -26,6 +26,10 @@
 #' @importFrom statcomp permutation_entropy ordinal_pattern_distribution
 #' @importFrom wdm wdm
 MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","Cor","IQR","PE","DM"), nCores = 0){
+  if (missing(XSeries1)) stop("The argument \"XSeries1\" must be provided.")
+  if (missing(XSeries2)) stop("The argument \"XSeries2\" must be provided.")
+  if (missing(f)) stop("The argument \"f\" (filter) must be provided. To see available filter use availableFilters()")
+
   if (nCores == 0) {
     nCores = detectCores() - 1
   }
@@ -239,10 +243,10 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
 #'              - "Conservative" : L < log2 ( N / (L - 1) + 1)
 #'              - "max" : L <= log2(N)
 #'              - "superMax" <= log2(1.5 * N)
-#' @param f Wavelet transform filter name. For avaible filters use ...
+#' @param f Wavelet transform filter name. For available filters use ...
 #' @param N Number of observations.
 #'
-#' @return Number of level of descomposition based in selection criteria
+#' @return Number of level of decomposition based in selection criteria
 #' @references Percival, D. B. and A. T. Walden (2000) Wavelet Methods for
 #'   Time Series Analysis. Cambridge: Cambridge University Press.
 #'
@@ -250,6 +254,8 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
 #'  lev <- chooseLevel("conservative","haar",8)
 #' @export
 chooseLevel <- function (choice,f,N) {
+  if (missing(choice)) stop("The argument \"choice\" must be provided. The available options are \"Conservative\", \"max\" and \"superMax\"")
+
   L <- wave.filter(f)[[1]]
   if (choice == "conservative") {
     J0 <- floor(log2( (N / (L - 1)) -1))
@@ -263,11 +269,14 @@ chooseLevel <- function (choice,f,N) {
     J0 <- floor(log2(1.5 * N))
     return(J0 - 1)
   }
-  stop(paste(c("selected choice",choice,"its not valid")))
+  stop(paste(c("selected choice",choice,"its not valid. The available options are \"Conservative\", \"max\" and \"superMax\"")))
 }
 
-extractSubset <- function(MWA,x){
-  n <- length(x)
+extractSubset <- function(MWA,indices){
+  if (missing(MWA)) stop("The argument \"MWA\" must be provided.")
+  if (missing(indices)) stop("The argument \"indices\" must be provided.")
+
+  n <- length(indices)
 
   MWA1 <- MWA
   MWA1$Observations <- n
@@ -278,21 +287,15 @@ extractSubset <- function(MWA,x){
   for (feature in names(MWA$Features)) {
     if ( !(is.na(MWA$Features[[feature]][1])) ){
       if ( dim(MWA$Features[[feature]])[1] == 1){
-        MWA1$Features[[feature]] <- t(as.matrix(MWA1$Features[[feature]][,x]))
-        MWA2$Features[[feature]] <- t(as.matrix(MWA2$Features[[feature]][,-x]))
+        MWA1$Features[[feature]] <- t(as.matrix(MWA1$Features[[feature]][,indices]))
+        MWA2$Features[[feature]] <- t(as.matrix(MWA2$Features[[feature]][,-indices]))
       } else {
-        MWA1$Features[[feature]] <- MWA1$Features[[feature]][,x]
-        MWA2$Features[[feature]] <- MWA2$Features[[feature]][,-x]
+        MWA1$Features[[feature]] <- MWA1$Features[[feature]][,indices]
+        MWA2$Features[[feature]] <- MWA2$Features[[feature]][,-indices]
       }
     }
   }
-
-# -------------------------------------------------------------------------
-
-
-
   return(list(MWA1,MWA2))
-
 }
 
 availableFilters <- function(){

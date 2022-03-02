@@ -9,18 +9,10 @@ testModel <- function(x,...) {
 }
 #' @export
 testModel.WaveAnalisys <- function (train,test,grps,method, returnClassification = FALSE) {
-  if (missing(train)) {
-    stop("\"train\" must be provided. \"train\" must be an object of class WaveAnalisys")
-  }
-  if (missing(test)) {
-    stop("\"test\" must be provided. \"test\" must be an object of class WaveAnalisys")
-  }
-  if (missing(grps)) {
-    stop("\"grps\" must be provided.")
-  }
-  if (missing(method)) {
-    stop("\"method\" must be provided. The avaiable options are \"linear\" or \"quadratic\"")
-  }
+  if (missing(train)) stop("The argument \"train\" must be provided. \"train\" must be an object of class WaveAnalisys")
+  if (missing(test)) stop("The argument \"test\" must be provided. \"test\" must be an object of class WaveAnalisys")
+  if (missing(grps)) stop("The arguemnt \"grps\" must be provided.")
+  if (missing(method)) stop("The argument \"method\" must be provided. The avaiable options are \"linear\" or \"quadratic\"")
 
   stopifnot(class(train) == "WaveAnalisys",
             class(test) == "WaveAnalisys")
@@ -38,11 +30,10 @@ testModel.WaveAnalisys <- function (train,test,grps,method, returnClassification
 }
 #' @export
 testModel.lda <- function (model,test,grps,returnClassification = FALSE) {
-  stopifnot(!missing(model),
-            !missing(test),
-            !missing(grps),
-            class(model) == "lda" || class(model) == "qda"
-            )
+  if (missing(model)) stop("The argument \"model\" must be provided")
+  if (missing(test)) stop("The argument \"test\" must be provided")
+  if (missing(grps)) stop("The argument \"grps\" must be provided")
+  stopifnot(class(model) == "lda" || class(model) == "qda")
 
   prediction <- classify(model,test)
   CM <- confusionMatrix(as.factor(prediction[[1]]),as.factor(grps))
@@ -66,21 +57,10 @@ LOOCV <- function(x,...){
 
 #' @export
 LOOCV.array <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0,features = c("Var","Cor","IQR","PE","DM"),returnClassification = FALSE,nCores = 0) {
-  if (missing(XSeries1)) {
-    stop("XSeries1 must be provided")
-  }
-
-  if (missing(XSeries2)) {
-    stop("XSeries2 must be provided")
-  }
-
-  if(missing(f)) {
-    stop("The parameter \"f\" (filter) must be defined. To see the avaiable filters use avaibleFilters function")
-  }
-
-  if (missing(method)){
-    stop("The parameter \"method\" must be defined. The avaiable  methods are \"linear\" and \"quadratic\"")
-  }
+  if (missing(XSeries1)) stop("The argument \"XSeries1\" must be provided")
+  if (missing(XSeries2)) stop("The argument \"XSeries2\" must be provided")
+  if(missing(f)) stop("The argument \"f\" (filter) must be provided. To see the avaiable filters use availableFilters()")
+  if (missing(method)) stop("The argument \"method\" must be defined. The available  methods are \"linear\" and \"quadratic\"")
 
   MWA <- generateStepDiscrim(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
   grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
@@ -99,7 +79,12 @@ LOOCV.array <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev 
 #'
 #' @importFrom caret confusionMatrix
 LOOCV.WaveAnalisys <- function(MWA,grps,method, returnClassification = FALSE) {
+  if (missing(MWA)) stop("The argument \"MWA\" must be provided")
+  if (missing(grps)) stop("The argument \"grps\" must be provided")
+  if (missing(method)) stop("The argument \"method\" must be provided")
   stopifnot(class(MWA) == "WaveAnalisys")
+
+
   n <- MWA$Observations
   class <- vector("numeric",n)
   for (i in 1:n) {
@@ -198,6 +183,11 @@ trainModel <- function(x, ...) {
 #' @md
 
 trainModel.array <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
+  if (missing(XSeries1)) stop("The argument \"XSeries1\" must be provided")
+  if (missing(XSeries2)) stop("The argument \"XSeries2\" must be provided")
+  if(missing(f)) stop("The argument \"f\" (filter) must be provided. To see the avaiable filters use availableFilters()")
+  if (missing(method)) stop("The argument \"method\" must be defined. The available  methods are \"linear\" and \"quadratic\"")
+
   MWA <- generateStepDiscrim(XSeries1,XSeries2,f,method,maxvars,Vstep,lev,features,nCores)
   grps = rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
   return (trainModel(MWA,grps,method))
@@ -214,13 +204,17 @@ trainModel.array <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0,
 #' @export
 #'
 #' @importFrom MASS lda qda
-trainModel.WaveAnalisys <- function (MWA,groups,method) {
+trainModel.WaveAnalisys <- function (MWA,grps,method) {
+  if (missing(MWA)) stop("The argument \"MWA\" must be provided")
+  if (missing(grps)) stop("The argument \"grps\" must be provided")
+  if (missing(method)) stop("The argument \"method\" must be defined. The available  methods are \"linear\" and \"quadratic\"")
+
   stopifnot(class(MWA) == "WaveAnalisys")
   values = values(MWA)
   if (method == "linear"){
-    model <- lda(t(values),groups)
+    model <- lda(t(values),grps)
   } else if (method == "quadratic"){
-    model <- qda(t(values),groups)
+    model <- qda(t(values),grps)
   } else{
     stop (paste(c("Method",method ,"not supported")))
   }
@@ -230,6 +224,8 @@ trainModel.WaveAnalisys <- function (MWA,groups,method) {
 #' @importFrom stats predict
 #' @importFrom magrittr %>%
 classify <- function (model,data) {
+  if (missing(model)) stop("The argument \"model\" must be provided")
+  if (missing(data)) stop("The argument  \"data\" must be provided")
   stopifnot(class(data) == "WaveAnalisys")
   stopifnot(class(model) == "lda" || class(model) =="qda")
 
