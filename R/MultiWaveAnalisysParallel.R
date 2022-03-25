@@ -29,6 +29,8 @@ MultiVaweAnalisys <- function (XSeries1,XSeries2,f,lev = 0,features = c("Var","C
   if (missing(XSeries1)) stop("The argument \"XSeries1\" must be provided.")
   if (missing(XSeries2)) stop("The argument \"XSeries2\" must be provided.")
   if (missing(f)) stop("The argument \"f\" (filter) must be provided. To see available filter use availableFilters()")
+  if (length(features) == 0) stop("At least one feature must be provided. To see the available filters use the availableFeatures()")
+
 
   if (nCores == 0) {
     nCores = detectCores() - 1

@@ -201,7 +201,7 @@ StepDiscrimV_ <- function(X,grps,VStep,nCores) {
   return(list(incl,Vcum,Vpcum))
 }
 
-#' Stepwise discriminant
+#' Select the most discriminating variables
 #'
 #' Stepwise discriminant analysis to determine the best subset of variables.
 #' Introduces variables so as to maximize at each step the Lawley-Hotelling
@@ -212,21 +212,24 @@ StepDiscrimV_ <- function(X,grps,VStep,nCores) {
 #' @param MWA WaveAnalisys object obtained with MultiVaweAnalisys function
 #' @param grps labeled vector that classify the observations.
 #' @param maxvars The number of desired values.
-#' @param Var Determines if the algorithm take in account the variances.
-#' For use this option, the provided WaveAnalisys has to have variances
-#' @param Cor Determines if the algorithm take in account the correlations.
-#'  For use this option, the provided WaveAnalisys has to have correlations
+#' @param features A list of characteristics that will be used for the classification process. To see the available features see \code{\link{availableFeatures}}
 #' @param nCores determines the number of processes that will be used in the function, by default it uses all but one of the system cores.
 #'
 #' @return A WaveAnalisys object with the maxvars most discriminant variables,
 #'  and a importance vector that determines the importance order of the selected variables.
 #'
+#' @examples MWA <- StepDiscrim(MWA,c(1,1,2,2),20)
+#'
+#' @seealso
+#' * \code{\link{MultiVaweAnalisys}}
+#' * \code{\link{StepDiscrimV}}
 #' @export
 #'
 StepDiscrim <- function (MWA,grps,maxvars,features = c("Var","Cor","IQR","PE","DM"), nCores = 0, pos=FALSE) {
   if (missing(MWA)) stop("The argument \"MWA\" must be provided.")
   if (missing(grps)) stop("The agument \"grps\" must be defined.")
   if (missing(maxvars) || maxvars <= 0) stop("The argument \"maxvars\" must be provided and must be grater than 0" )
+  if (length(features) == 0) stop("At least one feature must be provided. To see the available filters use the availableFeatures()")
 
   stopifnot(class(MWA) == "WaveAnalisys")
 
@@ -270,22 +273,28 @@ StepDiscrim <- function (MWA,grps,maxvars,features = c("Var","Cor","IQR","PE","D
   return(MWAAux)
 }
 
-#' Stepwise discriminant
+#' Select the most discriminating variables
 #'
 #' Stepwise discriminant analysis to determine the best subset of variables.
 #' Introduces variables so as to maximize at each step the Lawley-Hotelling
 #' trace (=Rao's V).  This measure is proportional to the mean Mahalanobis distance.
+#' The process ends when in one step the value of the awley-Hotelling trace is less than a given value.
 #'
 #' Based on StepDiscrim of R.E. Strauss
 #'
 #' @param MWA WaveAnalisys object obtained with MultiVaweAnalisys function
 #' @param grps labeled vector that classify the observations-
 #' @param VStep Determine the minimum value of V to continue adding new variables. Ex if an determinate step the maximum V is 0.2 but VStep is 0.3 the algorithm end.
-#' @param Var Determines if the algorithm take in account the variances. For use this option, the provided WaveAnalisys has to have variances
-#' @param Cor Determines if the algorithm take in account the correlations. For use this option, the provided WaveAnalisys has to have correlations
+#' @param features A list of characteristics that will be used for the classification process. To see the available features see \code{\link{availableFeatures}}
 #' @param nCores determines the number of processes that will be used in the function, by default it uses all but one of the system cores.
+
+#' @return A WaveAnalisys object with the most discriminant variables
 #'
-#' @return A WaveAnalisys object with the most discriminant variables, and a importance vector that determines the importance order of the selected variables.
+#' @examples MWA <- StepDiscrim(MWA,c(1,1,2,2),0.2)
+#'
+#' @seealso
+#' * \code{\link{MultiVaweAnalisys}}
+#' * \code{\link{StepDiscrim}}
 #'
 #' @export
 #'
@@ -293,6 +302,7 @@ StepDiscrimV <- function (MWA,grps,VStep,features = c("Var","Cor","IQR","PE","DM
   if (missing(MWA)) stop("The argument \"MWA\" must be provided.")
   if (missing(grps)) stop("The agument \"grps\" must be defined.")
   if (missing(VStep) || VStep <= 0) stop("The argument \"VStep\" must be provided and must be grater than 0" )
+  if (length(features) == 0) stop("At least one feature must be provided. To see the available filters use the availableFeatures()")
 
   stopifnot(class(MWA) == "WaveAnalisys")
 

@@ -38,10 +38,10 @@ D3toD2 <- function(i,j,k,nRows,nCols,nPages) {
 }
 
 generateStepDiscrim <- function(XSeries1,XSeries2,f,method, maxvars = 0, Vstep = 0, lev = 0, features = c("Var","Cor","IQR","PE","DM"),nCores = 0) {
-  if (missing(XSeries1)) stop("XSeries1 must be provided.")
-  if (missing(XSeries2)) stop("XSeries2 must be provided.")
-  if (missing(f)) stop("f must be provided. To see available filter use availableFilters()")
-  if (missing(method)) stop("method must be provided. The available options are \"linear\" and \"quadratic\"")
+  if (missing(XSeries1)) stop("The argument \"XSeries1\" must be provided.")
+  if (missing(XSeries2)) stop("The argument \"XSeries2\" must be provided.")
+  if (missing(f)) stop("The argument \"f\" (filter) must be provided. To see available filter use availableFilters()")
+  if (missing(method)) stop("The argument \"method\" must be provided. The available options are \"linear\" and \"quadratic\"")
 
   if (missing(maxvars) && missing(Vstep)){
     stop("maxvars o Vstep must be defined")
@@ -103,8 +103,8 @@ testFilters <- function(XSeries1,XSeries2,maxvars,filters = c("haar","d4","d6","
   if (missing(XSeries1)) stop("XSeries1 must be provided")
   if (missing(XSeries2)) stop("XSeries2 must be provided")
   if (missing(maxvars)) stop("maxvars must be provided")
-  if (is.empty(filters)) stop("At least one filter must be provided. To see the available filters use the availableFilters()")
-  if (is.empty(features)) stop("At least one feature must be provided. To see the available filters use the availableFeatures()")
+  if (length(filters) == 0) stop("At least one filter must be provided. To see the available filters use the availableFilters()")
+  if (length(features) == 0) stop("At least one feature must be provided. To see the available filters use the availableFeatures()")
 
   data <- list()
   grps <- rbind(matrix(1,dim(XSeries1)[[3]],1),matrix(2,dim(XSeries2)[[3]],1))
@@ -126,10 +126,12 @@ testFilters <- function(XSeries1,XSeries2,maxvars,filters = c("haar","d4","d6","
         for (v in 2:maxVar){
           print(v)
           filterValues <- Tr[incl[1:v],]
-          MWAAux <- list(Var = filterValues, Cor = NA, IQR = NA, DM = NA, PE = NA, Observations = MWA$Observations, NLevels = MWA$NLevels, filter = MWA$filter)
+          MWAAux <- list(Features = list(Var = filterValues, Cor = NA, IQR = NA, DM = NA, PE = NA), Observations = MWA$Observations, NLevels = MWA$NLevels, filter = MWA$filter)
           attr(MWAAux,"class") <- "WaveAnalisys"
-          data <- append(data,list(list(CM = LOOCV(MWAAux,grps,"linear"),NVars = v,Method = "linear",filter = f, Features = cFeatures)))
-          data <- append(data,list(list(CM = LOOCV(MWAAux,grps,"quadratic"),NVars = v,Method = "quadratic",filter = f, Features = cFeatures)))
+          aux <- LOOCV(MWAAux,grps,"linear",TRUE)
+          data <- append(data,list(list(CM = aux[[1]],classification = aux[[2]],NVars = v,Method = "linear",filter = f, Features = cFeatures)))
+          aux <- LOOCV(MWAAux,grps,"quadratic",TRUE)
+          data <- append(data,list(list(CM = aux[[1]],classification = aux[[2]],NVars = v,Method = "quadratic",filter = f, Features = cFeatures)))
         }
       }
     }
