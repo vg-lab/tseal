@@ -74,11 +74,11 @@ mgrinit <- function(cls,boost=F,barrback=F) {
   parallel::clusterEvalQ(cls,realrdsmlock <- rdsmlock)
   parallel::clusterEvalQ(cls,realrdsmunlock <- rdsmunlock)
   # send the threads needed Rdsm functions
-  parallel::clusterExport(cls,"barr")
-  parallel::clusterExport(cls,"getidxs")
-  parallel::clusterExport(cls,"getmatrix")
-  parallel::clusterExport(cls,"readsync")
-  parallel::clusterExport(cls,"writesync")
+  parallel::clusterExport(cls,"barr", envir = loadNamespace("MTSC"))
+  parallel::clusterExport(cls,"getidxs", envir = loadNamespace("MTSC"))
+  parallel::clusterExport(cls,"getmatrix", envir = loadNamespace("MTSC"))
+  parallel::clusterExport(cls,"readsync", envir = loadNamespace("MTSC"))
+  parallel::clusterExport(cls,"writesync", envir = loadNamespace("MTSC"))
   # make a single barrier, set it up on the worker nodes
   makebarr(cls,boost,barrback)
 }
@@ -139,12 +139,13 @@ mgrmakevar <- function(cls,varname,nr,nc,vartype="double",
 rdsmlock <- function(lck) 0
 rdsmunlock <- function(lck) 0
 
+#' @importFrom synchronicity boost.mutex describe attach.mutex
 mgrmakelock <- function(cls,lockname,boost=F) {
   if (boost) {
-    require(synchronicity)
+    #require(synchronicity)
     tmp <- synchronicity::boost.mutex()
     desc <- synchronicity::describe(tmp)
-    parallel::clusterEvalQ(cls,require(synchronicity))
+    parallel::clusterEvalQ(cls,TRUE)
     parallel::clusterExport(cls,"desc",envir=environment())
     parallel::clusterEvalQ(cls,
                            tmp <- synchronicity::attach.mutex(desc))
@@ -157,14 +158,18 @@ mgrmakelock <- function(cls,lockname,boost=F) {
 }
 
 # synchronicity lock/unlock
+
+#' @importFrom synchronicity lock
 boostlock <- function(lck) {
   if (is.character(lck)) lck <- get(lck)
-  require(synchronicity)
+  #require(synchronicity)
   synchronicity::lock(lck)
 }
+
+#' @importFrom synchronicity unlock
 boostunlock <- function(lck) {
   if (is.character(lck)) lck <- get(lck)
-  require(synchronicity)
+  #require(synchronicity)
   synchronicity::unlock(lck)
 }
 
@@ -198,7 +203,6 @@ makebarr <- function(cls,boost=F,barrback=F) {
   clusterEvalQ(cls,barrsense[1] <- 0)  # sense (0 or 1)
 }
 
-# barrier op
 barr <- function() {
   realrdsmlock(brlock)
   # rdsmlock(brlock)
