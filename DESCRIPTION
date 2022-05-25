@@ -19,6 +19,7 @@ Description: the library allows to perform a multivariate time series
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
+Depends:  R (>= 3.5.0)
 Imports:
     abind,
     waveslim,
@@ -29,7 +30,8 @@ Imports:
     pryr,
     magrittr,
     statcomp,
-    wdm
+    wdm,
+    synchronicity
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
