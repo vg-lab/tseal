@@ -4,5 +4,6 @@
 .Ruserdata
 *.rds
 revdep/
-man/*git checkj
+man
+git checkj
 *.Rproj
