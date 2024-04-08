@@ -1,5 +1,5 @@
 library(testthat)
-library(MTSC)
+library(TSEAL)
 
-test_check("MTSC")
+test_check("TSEAL")
 Sys.setenv("R_TESTS" = "")
