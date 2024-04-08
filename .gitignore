@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 *.rds
+revdep/
+man/*git checkj
+*.Rproj
