@@ -1,7 +1,7 @@
 Type: Package
 Package: TSEAL
 Title: Time Series Analysis Library
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person("Iván", "Velasco", , "ivan.velasco@urjc.es", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2314-5670"))
@@ -13,7 +13,7 @@ Description: The library allows to perform a multivariate time series
     allows to implement new steps.
 License: Artistic-2.0
 URL: https://github.com/vg-lab/TSEAL
-BugReports: GitHub issue tracker
+BugReports: https://github.com/vg-lab/TSEAL/issues
 Depends: 
     R (>= 4.3.0)
 Imports:
