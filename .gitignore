@@ -7,3 +7,5 @@ revdep/
 man
 git checkj
 *.Rproj
+CRAN-SUBMISSION
+cran-comments.md
