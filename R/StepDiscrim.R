@@ -149,15 +149,7 @@ StepDiscrimRaw_ <-
         Tr <- geTSEALectedFeatures(MWA, features)[[1]]
 
         if (nCores == 0) {
-            nCores <- detectCores() - 1
-        }
-
-        nCores <- min(c(nCores, detectCores() - 1))
-
-        chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-        if (nzchar(chk) && chk == "TRUE") {
-            # use 2 cores in CRAN/Travis/AppVeyor
-            nCores <- 2L
+            nCores <- parallelly::availableCores(omit = 1)
         }
 
         incl <- StepDiscrim_(t(Tr), grps, maxvars, nCores)[[1]]
@@ -361,16 +353,9 @@ StepDiscrim <- function(MWA,
     idx <- aux[[2]]
 
     if (nCores == 0) {
-        nCores <- detectCores() - 1
+        nCores <- parallelly::availableCores(omit = 1)
     }
 
-    chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    if (nzchar(chk) && chk == "TRUE") {
-        # use 2 cores in CRAN/Travis/AppVeyor
-        nCores <- 2L
-    }
-
-    nCores <- min(c(nCores, detectCores() - 1))
 
     incl <- StepDiscrim_(t(Tr), grps, maxvars, nCores)[[1]]
 
@@ -448,16 +433,9 @@ StepDiscrimV <- function(MWA,
     idx <- aux[[2]]
 
     if (nCores == 0) {
-        nCores <- detectCores() - 1
+        nCores <- parallelly::availableCores(omit = 1)
     }
 
-    chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    if (nzchar(chk) && chk == "TRUE") {
-        # use 2 cores in CRAN/Travis/AppVeyor
-        nCores <- 2L
-    }
-
-    nCores <- min(c(nCores, detectCores() - 1))
 
     incl <- StepDiscrimV_(t(Tr), grps, VStep, nCores)[[1]]
 

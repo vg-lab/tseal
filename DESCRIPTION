@@ -24,6 +24,7 @@ Imports:
     MASS,
     methods,
     parallel,
+    parallelly,
     pryr,
     statcomp,
     stats,

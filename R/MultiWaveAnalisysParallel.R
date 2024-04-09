@@ -45,6 +45,7 @@
 #' @importFrom stats sd
 #' @importFrom utils combn
 #' @importFrom checkmate anyMissing asCount
+#' @importFrom parallelly availableCores
 MultiWaveAnalysis <- function(XSeries,
                               f,
                               lev = 0,
@@ -92,14 +93,9 @@ MultiWaveAnalysis <- function(XSeries,
 
 
     if (nCores == 0) {
-        nCores <- detectCores() - 1
+        nCores <- parallelly::availableCores()
     }
 
-    chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    if (nzchar(chk) && chk == "TRUE") {
-        # use 2 cores in CRAN/Travis/AppVeyor
-        nCores <- 2L
-    }
 
     HVar <- "var" %in% features
     HCor <- "cor" %in% features
@@ -113,7 +109,7 @@ MultiWaveAnalysis <- function(XSeries,
     nr1 <- dim1[2] # Time series Lenght
     nc1 <- dim1[3] # Sample Size
 
-    nCores <- min(nCores, nc1, detectCores() - 1)
+    nCores <- min(nCores, nc1)
 
     if (lev == 0) {
         lev <- chooseLevel("conservative", f, nr1)
