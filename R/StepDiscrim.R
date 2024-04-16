@@ -149,7 +149,7 @@ StepDiscrimRaw_ <-
         Tr <- geTSEALectedFeatures(MWA, features)[[1]]
 
         if (nCores == 0) {
-            nCores <- parallelly::availableCores(omit = 1)
+            nCores <- parallelly::availableCores()
         }
 
         incl <- StepDiscrim_(t(Tr), grps, maxvars, nCores)[[1]]
@@ -313,13 +313,14 @@ StepDiscrimV_ <- function(X, grps, VStep, nCores) {
 #' @return A WaveAnalysis object with the maxvars most discriminant variables
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
-#' MWA <- MultiWaveAnalysis(ECGExample, "haar")
+#' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrim(
-#'   MWA, c(rep(1, 5), rep(2, 5)), 20,
-#'   c("Var", "Cor", "IQR")
+#'   MWA, c(rep(1, 5), rep(2, 5)), 5,
+#'   c("Var")
 #' )
-#'
+#'}
 #' @seealso
 #' * \code{\link{MultiWaveAnalysis}}
 #' * \code{\link{StepDiscrimV}}
@@ -353,7 +354,7 @@ StepDiscrim <- function(MWA,
     idx <- aux[[2]]
 
     if (nCores == 0) {
-        nCores <- parallelly::availableCores(omit = 1)
+        nCores <- parallelly::availableCores()
     }
 
 
@@ -387,12 +388,14 @@ StepDiscrim <- function(MWA,
 #' @return A WaveAnalysis object with the most discriminant variables
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
-#' MWA <- MultiWaveAnalysis(ECGExample, "haar")
+#' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrimV(
-#'   MWA, c(rep(1, 5), rep(2, 5)), 0.2,
-#'   c("Var", "Cor", "IQR")
+#'   MWA, c(rep(1, 5), rep(2, 5)), 0.1,
+#'   c("Var")
 #' )
+#' }
 #' @seealso
 #' * \code{\link{MultiWaveAnalysis}}
 #' * \code{\link{StepDiscrim}}
@@ -433,7 +436,7 @@ StepDiscrimV <- function(MWA,
     idx <- aux[[2]]
 
     if (nCores == 0) {
-        nCores <- parallelly::availableCores(omit = 1)
+        nCores <- parallelly::availableCores()
     }
 
 
@@ -458,19 +461,21 @@ StepDiscrimV <- function(MWA,
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' # We simulate that the second series has been obtained after
 #' Series1 <- ECGExample[, , 1:9]
 #' Series2 <- ECGExample[, , 10, drop = FALSE]
-#' MWA <- MultiWaveAnalysis(Series1, "haar", features = c("Cor", "PE"))
-#' MWADiscrim <- StepDiscrimV(MWA, c(rep(1, 5), rep(2, 4)), 0.2,
-#'   features = c("Cor", "PE")
+#' MWA <- MultiWaveAnalysis(Series1, "haar", features = c("var"))
+#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 4)), 5,
+#'   features = c("var")
 #' )
 #'
-#' MWA2 <- MultiWaveAnalysis(Series2, "haar", features = c("Cor", "PE"))
+#' MWA2 <- MultiWaveAnalysis(Series2, "haar", features = c("var"))
 #' MWA2Discrim <- SameDiscrim(MWA2, MWADiscrim)
 #' # At this point MWA2Discrim has the same variables that MWADiscrim
 #' # and can be used in a pretrained model with MWADiscrim
+#' }
 #'
 #' @seealso
 #' * \code{\link{StepDiscrim}}

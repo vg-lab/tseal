@@ -55,17 +55,19 @@ D3toD2 <- function(i, j, k, nRows, nCols, nPages) {
 #' * \code{\link{StepDiscrimV}}
 #'
 #' @examples
+#' \dontrun{
 #' ECGExample <- loadECGExample()
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' MWADiscrim <- generateStepDiscrim(ECGExample, grps, "haar",
-#'   features = c("Var", "Cor"), maxvars = 10
+#'   features = c("Var"), maxvars = 5
 #' )
 #' # or using the VStep option
 #' MWADiscrim <- generateStepDiscrim(ECGExample, grps, "haar",
-#'   features = c("Var", "Cor"), VStep = 0.7
+#'  features = c("Var", "Cor"), VStep = 0.7
 #' )
+#' }
 #' @export
 generateStepDiscrim <-
     function(XSeries,

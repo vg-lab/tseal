@@ -6,8 +6,8 @@ Authors@R:
     person("Iván", "Velasco", , "ivan.velasco@urjc.es", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2314-5670"))
 Description: The library allows to perform a multivariate time series
-    classification based on the use of DWT for feature extraction, a
-    stepwise discriminant to select the most relevant features and
+    classification based on the use of Discrete Wavelet Transform for feature extraction, a
+    step wise discriminant to select the most relevant features and
     finally, the use of a linear or quadratic discriminant for
     classification. Note that all these steps can be done separately which
     allows to implement new steps.

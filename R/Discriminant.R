@@ -44,16 +44,18 @@ testModel <- function(model, ...) {
 #'  classification result.
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
-#' MWA <- generateStepDiscrim(ECGExample, grps, "haar", maxvars = 5)
+#' MWA <- generateStepDiscrim(ECGExample, grps, "haar", maxvars = 5, features = c("var"))
 #' aux <- extractSubset(MWA, c(1, 2, 9, 10))
 #' MWATest <- aux[[1]]
 #' MWATrain <- aux[[2]]
 #' ldaDiscriminant <- trainModel(MWATrain, grps[3:8], "linear")
 #' CM <- testModel(ldaDiscriminant, MWATest, grps[c(1, 2, 9, 10)])
+#' }
 #'
 #' @seealso
 #' \code{\link{testModel}}
@@ -115,16 +117,18 @@ testModel.lda <- function(model,
 #'    classification result.
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
-#' MWA <- generateStepDiscrim(ECGExample, grps, "haar", maxvars = 2)
+#' MWA <- generateStepDiscrim(ECGExample, grps, "haar", maxvars = 2, features = c("var"))
 #' aux <- extractSubset(MWA, c(1, 2, 9, 10))
 #' MWATest <- aux[[1]]
 #' MWATrain <- aux[[2]]
 #' qdaDiscriminant <- trainModel(MWATrain, grps[3:8], "quadratic")
 #' CM <- testModel(qdaDiscriminant, MWATest, grps[c(1, 2, 9, 10)])
+#' }
 #'
 #' @export
 testModel.qda <- function(model,
@@ -200,17 +204,19 @@ LOOCV <- function(data, ...) {
 #'    classification result.
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' CM <- LOOCV(ECGExample, grps, "haar", "linear",
 #'   maxvars = 5,
-#'   features = c("Var", "Cor"), returnClassification = FALSE
+#'   features = c("Var"), returnClassification = FALSE
 #' )
 #' # or with VStep
 #' CMV <- LOOCV(ECGExample, grps, "haar", "linear",
-#'   VStep = 5,
-#'   features = c("Var", "Cor"), returnClassification = FALSE
+#'  VStep = 5,
+#'  features = c("Var", "Cor"), returnClassification = FALSE
 #' )
+#' }
 #' @seealso
 #' * \code{\link{LOOCV}}
 #' * \code{\link{LOOCV.WaveAnalysis}}
@@ -303,10 +309,12 @@ LOOCV.array <-
 #'    classification result.
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
-#' MWA <- MultiWaveAnalysis(ECGExample, "haar")
+#' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5)
 #' CM <- LOOCV(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear")
+#' }
 #'
 #' @seealso
 #' * \code{\link{LOOCV}}
@@ -431,18 +439,20 @@ KFCV <- function(data, ...) {
 #'    classification result.
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' CM <- KFCV(ECGExample, grps, "haar", "linear",
 #'   maxvars = 5,
-#'   features = c("Var", "Cor"), returnClassification = FALSE
+#'   features = c("Var"), returnClassification = FALSE
 #' )
 #' # or with VStep
 #' CMV <- KFCV(ECGExample, grps, "haar", "linear",
-#'   k = 5,
-#'   VStep = 5,
-#'   features = c("Var", "Cor"), returnClassification = FALSE
+#'  k = 5,
+#'  VStep = 5,
+#'  features = c("Var", "Cor"), returnClassification = FALSE
 #' )
+#' }
 #' @seealso
 #' * \code{\link{LOOCV}}
 #' * \code{\link{LOOCV.WaveAnalysis}}
@@ -544,12 +554,14 @@ KFCV.array <-
 #'    object of the confusionMatrix class and a vector with the
 #'    classification result.
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
-#' MWA <- MultiWaveAnalysis(ECGExample, "haar")
+#' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5)
 #' CM <- KFCV(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear", 5,
 #'   returnClassification = FALSE
 #' )
+#' }
 #'
 #' @importFrom checkmate anyMissing assertFlag
 #'
@@ -679,16 +691,18 @@ trainModel <- function(data, ...) {
 #' @return A discriminant model object (lda or qda)
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' # The dataset has the first 5 elements of class 1 and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' model <- trainModel(ECGExample, grps, "d6", "linear",
-#'   maxvars = 5, features = c("Var", "Cor")
+#'   maxvars = 5, features = c("Var")
 #' )
 #' # or using VStep
 #' modelV <- trainModel(ECGExample, grps, "d6", "linear",
-#'   VStep = 14.5, features = c("Var", "Cor")
+#'     VStep = 14.5, features = c("Var")
 #' )
+#' }
 #' @export
 #' @seealso
 #' * \code{\link{StepDiscrim}}
@@ -784,12 +798,14 @@ trainModel.array <-
 #'         the class lda or qda.
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
-#' MWA <- MultiWaveAnalysis(ECGExample, "d6", features = c("Var", "Cor"))
+#' MWA <- MultiWaveAnalysis(ECGExample, "d6", features = c("Var"))
 #' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5,
-#'   features = c("Var", "Cor")
+#'   features = c("Var")
 #' )
 #' model <- trainModel(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear")
+#' }
 #'
 #' @seealso
 #' * \code{\link{MultiWaveAnalysis}}
@@ -852,20 +868,22 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #' @return A factor with predicted class of each observation
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' # We simulate that the second series has been obtained after
 #' Series1 <- ECGExample[, , 1:9]
 #' Series2 <- ECGExample[, , 10, drop = FALSE]
 #'
 #' # Training a discriminant model
-#' MWA <- MultiWaveAnalysis(Series1, "haar")
-#' MWADiscrim <- StepDiscrimV(MWA, c(rep(1, 5), rep(2, 4)), 0.2)
+#' MWA <- MultiWaveAnalysis(Series1, "haar", features = c("var"))
+#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 4)), maxvars = 5)
 #' model <- trainModel(MWADiscrim, c(rep(1, 5), rep(2, 4)), "linear")
 #'
 #' # Using the discriminant trained on new data
-#' MWA2 <- MultiWaveAnalysis(Series2, "haar")
+#' MWA2 <- MultiWaveAnalysis(Series2, "haar", features = c("var"))
 #' MWA2Discrim <- SameDiscrim(MWA2, MWADiscrim)
 #' prediction <- classify(model, MWA2Discrim)
+#' }
 #'
 #' @seealso
 #' * \code{\link{trainModel}}

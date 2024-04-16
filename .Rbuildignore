@@ -1,4 +1,4 @@
-3^.*\.Rproj$
+^.*\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^revdep$

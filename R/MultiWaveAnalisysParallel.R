@@ -29,7 +29,7 @@
 #' ECGExample <- loadECGExample()
 #' MWA <- MultiWaveAnalysis(ECGExample,
 #'   f = "haar", lev = 0,
-#'   features = c("Var", "Cor", "IQR", "PE", "DM"), nCores = 0
+#'   features = c("Var", "Cor"), nCores = 0
 #' )
 #'
 #' @seealso
@@ -365,7 +365,7 @@ chooseLevel <- function(choice, filter, N) {
 #'
 #' @examples
 #' ECGExample <- loadECGExample()
-#' MWA <- MultiWaveAnalysis(ECGExample, "haar")
+#' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = "Var")
 #' aux <- extractSubset(MWA, c(1, 2, 3))
 #' MWATrain <- aux[[1]]
 #' MWATest <- aux[[2]]
