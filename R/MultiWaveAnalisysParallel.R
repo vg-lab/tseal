@@ -26,11 +26,13 @@
 #'         parameter features. This is an object of class WaveAnalysis
 #'
 #' @examples
+#' \donttest{
 #' ECGExample <- loadECGExample()
 #' MWA <- MultiWaveAnalysis(ECGExample,
 #'   f = "haar", lev = 0,
 #'   features = c("Var", "Cor"), nCores = 0
 #' )
+#' }
 #'
 #' @seealso
 #' * \code{\link{availableFilters}}
