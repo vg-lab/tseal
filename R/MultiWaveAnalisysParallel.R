@@ -27,7 +27,7 @@
 #'         contains
 #'         * Features: A list with the computed features
 #'         * StepSelection: A selection with the most discriminant features
-#'          \see{StepDiscrim}
+#'          \code{\link{StepDiscrim}}
 #'         * Observations: Number of total observations
 #'         * NLevels: Number of levels selected for the decomposition process
 #'         * filter: Filter used in the decomposition process
