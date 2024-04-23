@@ -310,11 +310,17 @@ StepDiscrimV_ <- function(X, grps, VStep, nCores) {
 #'        function, by default it uses all but one of the system cores. Must be
 #'        a positive integer, where 0 corresponds to the default behavior
 #'
-#' @return A WaveAnalysis object with the maxvars most discriminant variables
+#' @return A WaveAnalysis object with the maxvars most discriminant variables.
+#'          This object contains:
+#'          * Features: A list with the initial computed features
+#'          * StepSelection: The maxvars most discriminant variables
+#'          * Observations: Number of total observations
+#'          * NLevels: Number of levels selected for the decomposition process
+#'          * filter: Filter used in the decomposition process
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrim(
 #'   MWA, c(rep(1, 5), rep(2, 5)), 5,
@@ -385,11 +391,18 @@ StepDiscrim <- function(MWA,
 #'        function, by default it uses all but one of the system cores. Must be
 #'        a positive integer, where 0 corresponds to the default behavior
 #'
-#' @return A WaveAnalysis object with the most discriminant variables
+#' @return A WaveAnalysis object with the most discriminant variables.
+#'          This Object contains:
+#'          * Features: A list with the initial computed features
+#'          * StepSelection: The most discriminant variables selected by this
+#'                          function
+#'          * Observations: Number of total observations
+#'          * NLevels: Number of levels selected for the decomposition process
+#'          * filter: Filter used in the decomposition process
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrimV(
 #'   MWA, c(rep(1, 5), rep(2, 5)), 0.1,
@@ -462,7 +475,7 @@ StepDiscrimV <- function(MWA,
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # We simulate that the second series has been obtained after
 #' Series1 <- ECGExample[, , 1:9]
 #' Series2 <- ECGExample[, , 10, drop = FALSE]

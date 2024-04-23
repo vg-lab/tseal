@@ -13,6 +13,7 @@
 #'        used for classification.
 #' @param ... Additional arguments
 #'
+#' @return Not return value, used as generic function
 #'
 #' @seealso
 #' * \code{\link{testModel.lda}}
@@ -45,7 +46,7 @@ testModel <- function(model, ...) {
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
@@ -118,7 +119,7 @@ testModel.lda <- function(model,
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
@@ -147,6 +148,8 @@ testModel.qda <- function(model,
 #' @param data Starting data to generate the validation. It can be either the
 #'        raw data, or a previously generated WaveAnalysis object.
 #' @param ... Additional arguments
+#'
+#' @return Not return value, used as generic function
 #'
 #' @seealso
 #' * \code{\link{LOOCV.array}}
@@ -205,7 +208,7 @@ LOOCV <- function(data, ...) {
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' CM <- LOOCV(ECGExample, grps, "haar", "linear",
 #'   maxvars = 5,
@@ -310,7 +313,7 @@ LOOCV.array <-
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5)
 #' CM <- LOOCV(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear")
@@ -382,6 +385,8 @@ LOOCV.WaveAnalysis <-
 #'        raw data, or a previously generated WaveAnalysis object.
 #' @param ... Additional arguments
 #'
+#' @return Not return value, used as generic function
+#'
 #' @seealso
 #' * \code{\link{KFCV.array}}
 #' * \code{\link{KFCV.WaveAnalysis}}
@@ -440,7 +445,7 @@ KFCV <- function(data, ...) {
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' CM <- KFCV(ECGExample, grps, "haar", "linear",
 #'   maxvars = 5,
@@ -555,7 +560,7 @@ KFCV.array <-
 #'    classification result.
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
 #' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5)
 #' CM <- KFCV(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear", 5,
@@ -692,7 +697,7 @@ trainModel <- function(data, ...) {
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1 and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
 #' model <- trainModel(ECGExample, grps, "d6", "linear",
@@ -799,7 +804,7 @@ trainModel.array <-
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "d6", features = c("Var"))
 #' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5,
 #'   features = c("Var")
@@ -869,7 +874,7 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # We simulate that the second series has been obtained after
 #' Series1 <- ECGExample[, , 1:9]
 #' Series2 <- ECGExample[, , 10, drop = FALSE]

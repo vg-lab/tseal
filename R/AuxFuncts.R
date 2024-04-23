@@ -56,7 +56,7 @@ D3toD2 <- function(i, j, k, nRows, nCols, nPages) {
 #'
 #' @examples
 #' \dontrun{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
@@ -166,12 +166,12 @@ generateStepDiscrim <-
 #'   * Features: vector containing the features taken into account
 #'
 #' @examples
-#' \dontrun{
-#' ECGExample <- loadECGExample()
+#' \donttest{
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
-#' result <- testFilters(ECGExample, grps, maxvars = 3)
+#' result <- testFilters(ECGExample, grps, features=c("var","cor"), filters= c("haar","h4"), maxvars = 3)
 #' }
 #'
 #' @export
@@ -284,25 +284,4 @@ testFilters <- function(XSeries,
         }
     }
     return(data)
-}
-
-#' Loads a small data set for use in examples
-#'
-#' Loads a small example DataSet with 15 channels, each of these channels has
-#' 8192 samples and a total of 10 cases. The first 5 cases are of one class and
-#' the other 5 are of another. A simple way to generate the groups would be:
-#' grps <- c(rep(1, 5), rep(2, 5))
-#'
-#' @return A matrix of dim 15 x 8192 x 10 (dimensions x length x cases)
-#' @export
-#'
-#' @examples
-#' ECGExample <- loadECGExample()
-#' summary(ECGExample)
-#'
-#' @importFrom utils data
-loadECGExample <- function() {
-    .myDataEnv <- new.env(parent = emptyenv())
-    data(ECGExample, envir = .myDataEnv)
-    return(.myDataEnv$ECGExample)
 }

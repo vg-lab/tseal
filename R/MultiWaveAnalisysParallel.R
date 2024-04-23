@@ -23,11 +23,18 @@
 #'        a positive integer, where 0 corresponds to the default behavior
 #'
 #' @return A multivariate analysis with the characteristics indicated in the
-#'         parameter features. This is an object of class WaveAnalysis
+#'         parameter features. This is an object of class WaveAnalysis with
+#'         contains
+#'         * Features: A list with the computed features
+#'         * StepSelection: A selection with the most discriminant features
+#'          \see{StepDiscrim}
+#'         * Observations: Number of total observations
+#'         * NLevels: Number of levels selected for the decomposition process
+#'         * filter: Filter used in the decomposition process
 #'
 #' @examples
 #' \donttest{
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample,
 #'   f = "haar", lev = 0,
 #'   features = c("Var", "Cor"), nCores = 0
@@ -366,7 +373,7 @@ chooseLevel <- function(choice, filter, N) {
 #' @export
 #'
 #' @examples
-#' ECGExample <- loadECGExample()
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = "Var")
 #' aux <- extractSubset(MWA, c(1, 2, 3))
 #' MWATrain <- aux[[1]]
