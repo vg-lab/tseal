@@ -89,7 +89,7 @@ test_that("trainModel Input", {
 })
 
 test_that("testModel", {
-    ECGExample <- loadECGExample()
+    load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
     grps <- c(rep(1, 5), rep(2, 5))
     MWA <-
         generateStepDiscrim(ECGExample, grps, "haar", maxvars = 3)
@@ -106,7 +106,7 @@ test_that("testModel", {
 })
 
 test_that("testModel Input", {
-    ECGExample <- loadECGExample()
+    load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
     grps <- c(rep(1, 5), rep(2, 5))
     MWA <-
         generateStepDiscrim(ECGExample, grps, "haar", maxvars = 3)

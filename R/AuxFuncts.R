@@ -171,7 +171,8 @@ generateStepDiscrim <-
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
 #' grps <- c(rep(1, 5), rep(2, 5))
-#' result <- testFilters(ECGExample, grps, features=c("var","cor"), filters= c("haar","h4"), maxvars = 3)
+#' result <- testFilters(ECGExample, grps, features=c("var","cor"),
+#'           filters= c("haar","h4"), maxvars = 3)
 #' }
 #'
 #' @export

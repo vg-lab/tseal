@@ -17,7 +17,8 @@ test_that("GenerateStepDiscrim", {
 })
 
 test_that("GenerateStepDiscrim Iputs", {
-    testExperiments <- loadECGExample()
+    load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
+    testExperiments <- ECGExample
     grps <- c(1, 1, 2, 2)
 
     expect_error(generateStepDiscrim(
@@ -38,7 +39,8 @@ test_that("GenerateStepDiscrim Iputs", {
 })
 
 # test_that("testFilters", {
-testExperiments <- loadECGExample()
+load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
+testExperiments <- ECGExample
 grps <- c(rep(1, 5), rep(2, 5))
 
 data <- testFilters(
