@@ -70,7 +70,7 @@ geTSEALectedFeatures <- function(MWA, features) {
     for (ix in seq_along(idx)) {
         id <- idx[ix]
         if (is.na(id) || all(is.na(MWA$Features[[id]]))) {
-            stop("The provided analysis does not contain",
+            stop("The provided analysis does not contain ",
                  as.character(features[ix]))
         } else {
             Tr <- rbind(Tr, MWA$Features[[id]])

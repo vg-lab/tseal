@@ -3,25 +3,6 @@
 # Created by: ivan
 # Created on: 8/4/21
 
-#' Applies a discriminant to perform a classification
-#'
-#' This function performs a classification using a pretrained discriminant
-#' (linear or quadratic), and return a confusion matrix with the results
-#' obtained
-#'
-#' @param model Previously trained model (linear or quadratic) that will be
-#'        used for classification.
-#' @param ... Additional arguments
-#'
-#' @return Not return value, used as generic function
-#'
-#' @seealso
-#' * \code{\link{testModel.lda}}
-#' * \code{\link{testModel.qda}}
-#' @export
-testModel <- function(model, ...) {
-    UseMethod("testModel")
-}
 
 #' Computes a classification from a pretrained discriminant
 #'
@@ -29,7 +10,7 @@ testModel <- function(model, ...) {
 #' test data. As output it returns a confusion matrix and optionally the raw
 #' classification result.
 #'
-#' @param model Trained linear discriminant (lda object).
+#' @param model Trained linear discriminant.
 #'              see \code{\link{trainModel}}
 #' @param test WaveAnalysis class object to be used as test set.
 #' @param grps Vector that determines the class to which each of the
@@ -63,14 +44,14 @@ testModel <- function(model, ...) {
 #'
 #' @importFrom checkmate anyMissing assertFlag
 #' @export
-testModel.lda <- function(model,
-                          test,
-                          grps,
-                          returnClassification = FALSE,
-                          ...) {
+testModel <- function(model,
+                      test,
+                      grps,
+                      returnClassification = FALSE,
+                      ...) {
     checkmate::anyMissing(c(model, test, grps))
     checkmate::assertFlag(returnClassification)
-    stopifnot(is(model, "lda") || is(model, "qda"))
+    stopifnot(is(model, "WaveModel"))
     if (test$Observations != length(grps)) {
         stop(
             "The number of observations in the test set does not correspond to the
@@ -85,8 +66,7 @@ testModel.lda <- function(model,
         )
     }
 
-
-    prediction <- classify(model, test)
+    prediction <- classify(test, model)
     CM <- confusionMatrix(as.factor(prediction), as.factor(grps))
 
     if (returnClassification) {
@@ -94,50 +74,6 @@ testModel.lda <- function(model,
     }
 
     return(CM)
-}
-
-#' testModel.qda
-#'
-#' This function uses a pretrained quadratic discriminant to classify a set of
-#' test data. As output it returns a confusion matrix and optionally the raw
-#' classification result.
-#'
-#' @param model Trained quadratic discriminant (instance of class qda).
-#'        see \code{\link{trainModel}}
-#' @param test WaveAnalysis class object to be used as test set.
-#' @param grps Vector that determines the class to which each of the
-#'             observations provided in the test set belongs.
-#' @param returnClassification Allows to select if the raw result classification
-#'        is returned.
-#' @param ... Additional arguments
-#'
-#' @return * if returnClassification is false return a object of class
-#'            confusionMatrix
-#'  * if returnClassification is true, it returns a list containing an
-#'    object of the confusionMatrix class and a vector with the
-#'    classification result.
-#'
-#' @examples
-#' \donttest{
-#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
-#' # The dataset has the first 5 elements of class 1
-#' # and the last 5 of class 2.
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' MWA <- generateStepDiscrim(ECGExample, grps, "haar", maxvars = 2, features = c("var"))
-#' aux <- extractSubset(MWA, c(1, 2, 9, 10))
-#' MWATest <- aux[[1]]
-#' MWATrain <- aux[[2]]
-#' qdaDiscriminant <- trainModel(MWATrain, grps[3:8], "quadratic")
-#' CM <- testModel(qdaDiscriminant, MWATest, grps[c(1, 2, 9, 10)])
-#' }
-#'
-#' @export
-testModel.qda <- function(model,
-                          test,
-                          grps,
-                          returnClassification = FALSE,
-                          ...) {
-    testModel.lda(model, test, grps, returnClassification)
 }
 
 #' Leave-One-Out Cross Validation
@@ -315,7 +251,8 @@ LOOCV.array <-
 #' \donttest{
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
-#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5)
+#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5,
+#'                           features = c("var"))
 #' CM <- LOOCV(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear")
 #' }
 #'
@@ -365,7 +302,7 @@ LOOCV.WaveAnalysis <-
             MWATrain <- aux[[2]]
             grpsT <- grps[-i]
             model <- trainModel(MWATrain, grpsT, method)
-            class[i] <- classify(model, MWATest)
+            class[i] <- classify(MWATest, model)
         }
         CM <- confusionMatrix(as.factor(class), as.factor(grps))
 
@@ -455,7 +392,7 @@ KFCV <- function(data, ...) {
 #' CMV <- KFCV(ECGExample, grps, "haar", "linear",
 #'  k = 5,
 #'  VStep = 5,
-#'  features = c("Var", "Cor"), returnClassification = FALSE
+#'  features = c("Var"), returnClassification = FALSE
 #' )
 #' }
 #' @seealso
@@ -562,7 +499,8 @@ KFCV.array <-
 #' \donttest{
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' MWA <- MultiWaveAnalysis(ECGExample, "haar", features = c("var"))
-#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5)
+#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 5)), 5,
+#'               features = c("var"))
 #' CM <- KFCV(MWADiscrim, c(rep(1, 5), rep(2, 5)), "linear", 5,
 #'   returnClassification = FALSE
 #' )
@@ -623,7 +561,7 @@ KFCV.WaveAnalysis <- function(data,
         MWATrain <- aux[[2]]
         grpsT <- reorderGrps[-c(n:m)]
         model <- trainModel(MWATrain, grpsT, method)
-        class[n:m] <- classify(model, MWATest)
+        class[n:m] <- classify(MWATest, model)
         n <- n + inc
         m <- m + inc
         m <- min(m, nobs)
@@ -856,7 +794,43 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
     } else {
         stop("Method", as.character(method), "not supported")
     }
-    return(model)
+    features <- c()
+    selected <- list()
+    for (feature in names(MWA$StepSelection)) {
+        if (!all(is.na(MWA$StepSelection[[feature]]))) {
+            features <- c(features,feature)
+            selected[[feature]] <- MWA$StepSelection[[feature]]
+        }
+    }
+
+
+    x <- list(Model = model, Features = features, Selected = selected,
+              NLevels = MWA$NLevels, filter = MWA$filter)
+    attr(x, "class") <- "WaveModel"
+    return(x)
+}
+
+#' Classifies observations based on a pretrained model.
+#'
+#' This function allows to classify observations based on a pretrained model
+#' that could have been obtained in several ways (such as using the train model
+#' function). T
+#'
+#' @param data The data to be classified. This  data can be either the raw data, or a WaveAnalysis
+#'        object generated earlier.
+#' @param ... Additional arguments
+#'
+#' @return A factor with predicted class of each observation
+#'
+#' @seealso
+#' * \code{\link{trainModel}}
+#' * \code{\link{classify.array}}
+#' * \code{\link{classify.WaveAnalysis}}
+#'
+#'
+#' @export
+classify <- function(data, ...){
+    UseMethod("classify")
 }
 
 #' Classifies observations based on a pretrained model.
@@ -865,10 +839,11 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #' that could have been obtained in several ways (such as using the train model
 #' function).
 #'
-#' @param model pretrained discriminant model (lda or qda)
 #' @param data Data to be classified by the model. Remember that it must be an
 #'        object of type WaveAnalysis. Note that it should have the same
 #'        variables selected as those used to generate the model.
+#' @param model pretrained discriminant model (lda or qda)
+#' @param ... Additional arguments
 #'
 #' @return A factor with predicted class of each observation
 #'
@@ -881,13 +856,14 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #'
 #' # Training a discriminant model
 #' MWA <- MultiWaveAnalysis(Series1, "haar", features = c("var"))
-#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 4)), maxvars = 5)
+#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 4)), maxvars = 5,
+#'                           features = c("var"))
 #' model <- trainModel(MWADiscrim, c(rep(1, 5), rep(2, 4)), "linear")
 #'
 #' # Using the discriminant trained on new data
 #' MWA2 <- MultiWaveAnalysis(Series2, "haar", features = c("var"))
 #' MWA2Discrim <- SameDiscrim(MWA2, MWADiscrim)
-#' prediction <- classify(model, MWA2Discrim)
+#' prediction <- classify(MWA2Discrim, model)
 #' }
 #'
 #' @seealso
@@ -897,13 +873,97 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #'
 #' @importFrom stats predict
 #' @importFrom magrittr %>%
-classify <- function(model, data) {
+classify.WaveAnalysis <- function(data, model, ...) {
     if (missing(model)) {
         stop("The argument \"model\" must be provided")
     }
     stopifnot(is(data, "WaveAnalysis"))
-    stopifnot(is(model, "lda") || is(model, "qda"))
+    stopifnot(is(model, "WaveModel"))
 
     values <- values(data)
-    return(predict(model, t(values))[[1]])
+    return(predict(model$Model, t(values))[[1]])
+}
+
+#' Classifies observations based on a pretrained model.
+#'
+#' This function allows to classify observations based on a pretrained model
+#' that could have been obtained in several ways (such as using the train model
+#' function).
+#'
+#' @param data Sample from the population (dim x length x cases)
+#' @param model pretrained discriminant model (lda or qda)
+#' @param ... Additional arguments
+#'
+#' @return A factor with predicted class of each observation
+#'
+#' @examples
+#' \donttest{
+#' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
+#' # We simulate that the second series has been obtained after
+#' Series1 <- ECGExample[, , 1:9]
+#' Series2 <- ECGExample[, , 10, drop = FALSE]
+#'
+#' # Training a discriminant model
+#' MWA <- MultiWaveAnalysis(Series1, "haar", features = c("var"))
+#' MWADiscrim <- StepDiscrim(MWA, c(rep(1, 5), rep(2, 4)), maxvars = 5,
+#'                           features = c("var"))
+#' model <- trainModel(MWADiscrim, c(rep(1, 5), rep(2, 4)), "linear")
+#'
+#' # Using the discriminant trained on new data
+#' prediction <- classify(Series2, model)
+#' }
+#'
+#' @seealso
+#' * \code{\link{trainModel}}
+#'
+#' @export
+#'
+#' @importFrom stats predict
+#' @importFrom magrittr %>%
+classify.array <- function(data, model, ...) {
+
+    checkmate::anyMissing(c(data, model))
+
+    if (length(dim(data)) != 3) {
+        stop(
+            "It seems that a dimension is missing, in case your series contains
+         only one case, make sure that you have activated the option
+         \"drop = FALSE\" as in the following example
+         Series1 = Series2 [,,1, drop = FALSE]."
+        )
+    }
+
+    MWA <- MultiWaveAnalysis(data, model$filter, model$NLevels, model$Features);
+
+    MWADiscrim <- list(
+        Features = list(
+            Var = NA,
+            Cor = NA,
+            IQR = NA,
+            DM = NA,
+            PE = NA
+        ),
+        StepSelection = list(
+            Var = NA,
+            Cor = NA,
+            IQR = NA,
+            DM = NA,
+            PE = NA
+        ),
+        Observations = MWA$Observations,
+        NLevels = MWA$NLevels,
+        filter = MWA$filter
+        )
+
+    attr(MWADiscrim, "class") <- "WaveAnalysis"
+
+    for (feature in names(model$Selected)) {
+        selection <- model$Selected[[feature]]
+        MWADiscrim$Features[[feature]] <-
+                MWA$Features[[feature]][selection, ,
+                                        drop = FALSE]
+        MWADiscrim$StepSelection[[feature]] <- selection
+    }
+
+    return (classify.WaveAnalysis(MWADiscrim,model))
 }

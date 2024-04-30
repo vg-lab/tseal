@@ -1,7 +1,7 @@
 Type: Package
 Package: TSEAL
 Title: Time Series Analysis Library
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: 
     person("Iván", "Velasco", , "ivan.velasco@urjc.es", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2314-5670"))
@@ -39,7 +39,7 @@ Suggests:
     spelling,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Config/testthat/parallel: false
+Config/testthat/parallel: faslse
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd"))

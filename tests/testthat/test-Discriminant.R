@@ -15,8 +15,8 @@ test_that("trainModel", {
     resultMWA <-
         trainModel(MWADiscrim, MedicalClasification, "linear")
 
-    expect_s3_class(resultArray, c("lda", "qda"))
-    expect_s3_class(resultMWA, c("lda", "qda"))
+    expect_s3_class(resultArray, "WaveModel")
+    expect_s3_class(resultMWA, "WaveModel")
     expect_equal(resultArray, resultMWA)
 })
 

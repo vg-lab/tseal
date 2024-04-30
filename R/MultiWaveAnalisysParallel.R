@@ -523,7 +523,7 @@ summary.WaveAnalysis <- function(object, ...) {
         "MultiWave Analysis Object:",
         "\n\tNumber of Observations: ",
         MWA$Observations,
-        "\n\tnumber of decomposing levels: ",
+        "\n\tNumber of decomposing levels: ",
         MWA$NLevels,
         "\n\tFilter used: ",
         MWA$filter,
@@ -531,7 +531,7 @@ summary.WaveAnalysis <- function(object, ...) {
     )
 
 
-    FeaturesStr <- paste("\tStored Features:")
+    FeaturesStr <- paste("\tStored Features per observation:")
     for (feature in names(MWA$Features)) {
         if (!all(is.na(MWA$Features[[feature]]))) {
             NFeature <- dim(MWA$Features[[feature]])[1]
@@ -545,7 +545,7 @@ summary.WaveAnalysis <- function(object, ...) {
     if (all(is.na(MWA$StepSelection))) {
         SelectionStr <-
             paste(
-                "\tThis MultiWaveAnalysis object has not gone",
+                "\tThis WaveAnalysis object has not gone",
                 "through the variable selection process."
             )
     } else {
