@@ -8,7 +8,7 @@
 #' Generates a multivariate analysis by calculating a series of features from
 #' the result of applying MODWT to the input data.
 #'
-#' @param XSeries Sample from the population (array of three dimensions
+#' @param series Sample from the population (array of three dimensions
 #'        \[dim, length, cases\]
 #' @param f Selected wavelet filter for the analysis. To see the available
 #'        filters use the function \code{\link{availableFilters}}
@@ -23,14 +23,14 @@
 #'        a positive integer, where 0 corresponds to the default behavior
 #'
 #' @return A multivariate analysis with the characteristics indicated in the
-#'         parameter features. This is an object of class WaveAnalysis with
+#'         parameter features. This is an object of class MultiWaveAnalysis with
 #'         contains
 #'         * Features: A list with the computed features
 #'         * StepSelection: A selection with the most discriminant features
 #'          \code{\link{StepDiscrim}}
 #'         * Observations: Number of total observations
 #'         * NLevels: Number of levels selected for the decomposition process
-#'         * filter: Filter used in the decomposition process
+#'         * Filter: Filter used in the decomposition process
 #'
 #' @examples
 #' \donttest{
@@ -55,12 +55,12 @@
 #' @importFrom utils combn
 #' @importFrom checkmate anyMissing asCount
 #' @importFrom parallelly availableCores
-MultiWaveAnalysis <- function(XSeries,
+MultiWaveAnalysis <- function(series,
                               f,
                               lev = 0,
                               features = c("Var", "Cor", "IQR", "PE", "DM"),
                               nCores = 0) {
-    checkmate::anyMissing(c(XSeries, f))
+    checkmate::anyMissing(c(series, f))
 
     if (length(features) == 0) {
         stop(
@@ -69,7 +69,7 @@ MultiWaveAnalysis <- function(XSeries,
         )
     }
 
-    if (length(dim(XSeries)) != 3) {
+    if (length(dim(series)) != 3) {
         stop(
             "It seems that a dimension is missing, in case your series contains
          only one case, make sure that you have activated the option
@@ -112,7 +112,7 @@ MultiWaveAnalysis <- function(XSeries,
     HPE <- "pe" %in% features
     HDM <- "dm" %in% features
 
-    dim1 <- dim(XSeries)
+    dim1 <- dim(series)
 
     nv1 <- dim1[1] # Time series Dimension
     nr1 <- dim1[2] # Time series Lenght
@@ -143,7 +143,7 @@ MultiWaveAnalysis <- function(XSeries,
         mgrmakevar(c, "YSeries1", nc1, nv1 * nr1)
 
         for (i in seq_len(nc1)) {
-            YSeries1[i, ] <- as.vector(t(XSeries[, , i]))
+            YSeries1[i, ] <- as.vector(t(series[, , i]))
         }
 
 
@@ -305,9 +305,9 @@ MultiWaveAnalysis <- function(XSeries,
         ),
         Observations = nc1,
         NLevels = lev,
-        filter = f
+        Filter = f
     )
-    attr(x, "class") <- "WaveAnalysis"
+    attr(x, "class") <- "MultiWaveAnalysis"
     return(x)
 }
 
@@ -350,7 +350,7 @@ chooseLevel <- function(choice, filter, N) {
         return(J0 - 1)
     }
     stop(
-        "selected choice",
+        "Selected choice",
         as.character(choice),
         "its not valid. The
                 available options are \"Conservative\", \"max\" and
@@ -358,18 +358,18 @@ chooseLevel <- function(choice, filter, N) {
     )
 }
 
-#' Extract observations from a WaveAnalysis
+#' Extract observations from a MultiWaveAnalysis
 #'
-#' This function permits to extract certain observations from a WaveAnalysis
+#' This function permits to extract certain observations from a MultiWaveAnalysis
 #'
-#' @param MWA WaveAnalysis from which the desired observations will be extracted
+#' @param MWA MultiWaveAnalysis from which the desired observations will be extracted
 #' @param indices Indices that will indicate which observations will be
 #'        extracted
 #'
 #'
 #' @return A list with two elements:
-#'  * MWA: The WaveAnalysis provided minus the extracted observations.
-#'  * MWAExtracted: A new WaveAnalysis with the extracted observations
+#'  * MWA: The MultiWaveAnalysis provided minus the extracted observations.
+#'  * MWAExtracted: A new MultiWaveAnalysis with the extracted observations
 #' @export
 #'
 #' @examples
@@ -510,14 +510,14 @@ computeDMeasure <- function(X, Y) {
 }
 
 #' @export
-print.WaveAnalysis <- function(x, ...) {
+print.MultiWaveAnalysis <- function(x, ...) {
     summary(x)
 }
 
 
 
 #' @export
-summary.WaveAnalysis <- function(object, ...) {
+summary.MultiWaveAnalysis <- function(object, ...) {
     MWA <- object
     InitStr <- paste(
         "MultiWave Analysis Object:",
@@ -526,7 +526,7 @@ summary.WaveAnalysis <- function(object, ...) {
         "\n\tNumber of decomposing levels: ",
         MWA$NLevels,
         "\n\tFilter used: ",
-        MWA$filter,
+        MWA$Filter,
         sep = ""
     )
 
@@ -545,7 +545,7 @@ summary.WaveAnalysis <- function(object, ...) {
     if (all(is.na(MWA$StepSelection))) {
         SelectionStr <-
             paste(
-                "\tThis WaveAnalysis object has not gone",
+                "\tThis MultiWaveAnalysis object has not gone",
                 "through the variable selection process."
             )
     } else {
@@ -574,7 +574,7 @@ summary.WaveAnalysis <- function(object, ...) {
 }
 
 values <- function(MWA) {
-    stopifnot(is(MWA, "WaveAnalysis"))
+    stopifnot(is(MWA, "MultiWaveAnalysis"))
     values <- matrix(0, nrow = 0, ncol = MWA$Observations)
     for (feature in MWA$Features) {
         if (!(is.na(feature[1]))) {

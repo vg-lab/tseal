@@ -21,11 +21,11 @@ D3toD2 <- function(i, j, k, nRows, nCols, nPages) {
 
 #' Generate StepDiscrim from raw data
 #'
-#' This function allows to obtain in a single step the complete WaveAnalysis
-#' and the selection of the most discriminating variables of the WaveAnalysis.
+#' This function allows to obtain in a single step the complete MultiWaveAnalysis
+#' and the selection of the most discriminating variables of the MultiWaveAnalysis.
 #'
-#' @param XSeries Sample from the population (dim x length x cases)
-#' @param grps Labeled vector that classify the observations
+#' @param series Sample from the population (dim x length x cases)
+#' @param labels Labeled vector that classify the observations
 #' @param f Selected filter for the MODWT (to see the available filters use the
 #'        function \code{\link{availableFilters}}
 #' @param maxvars Maximum number of variables included by the StepDiscrim
@@ -59,27 +59,27 @@ D3toD2 <- function(i, j, k, nRows, nCols, nPages) {
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' MWADiscrim <- generateStepDiscrim(ECGExample, grps, "haar",
+#' labels <- c(rep(1, 5), rep(2, 5))
+#' MWADiscrim <- generateStepDiscrim(ECGExample, labels, "haar",
 #'   features = c("Var"), maxvars = 5
 #' )
 #' # or using the VStep option
-#' MWADiscrim <- generateStepDiscrim(ECGExample, grps, "haar",
+#' MWADiscrim <- generateStepDiscrim(ECGExample, labels, "haar",
 #'  features = c("Var", "Cor"), VStep = 0.7
 #' )
 #' }
 #' @export
 generateStepDiscrim <-
-    function(XSeries,
-             grps,
+    function(series,
+             labels,
              f,
              maxvars,
              VStep,
              lev = 0,
              features = c("Var", "Cor", "IQR", "PE", "DM"),
              nCores = 0) {
-        if (missing(XSeries)) {
-            stop("The argument \"XSeries\" must be provided.")
+        if (missing(series)) {
+            stop("The argument \"series\" must be provided.")
         }
         if (missing(f)) {
             stop(
@@ -87,11 +87,11 @@ generateStepDiscrim <-
                        To see available filter use availableFilters()"
             )
         }
-        if (missing(grps)) {
-            stop("The argument \"grps\" must be provided.")
+        if (missing(labels)) {
+            stop("The argument \"labels\" must be provided.")
         }
 
-        if (length(dim(XSeries)) != 3) {
+        if (length(dim(series)) != 3) {
             stop(
                 "It seems that a dimension is missing, in case your series contains
          only one case, make sure that you have activated the option
@@ -100,8 +100,8 @@ generateStepDiscrim <-
             )
         }
 
-        if (length(grps) != dim(XSeries)[3]) {
-            stop("The number of observations in the data and those provided in grps do
+        if (length(labels) != dim(series)[3]) {
+            stop("The number of observations in the data and those provided in labels do
          not match.")
         }
 
@@ -124,11 +124,11 @@ generateStepDiscrim <-
 
         f <- tolower(f)
 
-        MWA <- MultiWaveAnalysis(XSeries, f, lev, features, nCores)
+        MWA <- MultiWaveAnalysis(series, f, lev, features, nCores)
         if (!missing(maxvars)) {
-            MWA <- StepDiscrim(MWA, grps, maxvars, features, nCores)
+            MWA <- StepDiscrim(MWA, labels, maxvars, features, nCores)
         } else {
-            MWA <- StepDiscrimV(MWA, grps, VStep, features, nCores)
+            MWA <- StepDiscrimV(MWA, labels, VStep, features, nCores)
         }
 
         return(MWA)
@@ -142,8 +142,8 @@ generateStepDiscrim <-
 #' variables to be considered and the differences between a linear and a
 #' quadratic discriminant.
 #'
-#' @param XSeries Samples from the population (dim x length x cases)
-#' @param grps Labeled vector that classify the observations.
+#' @param series Samples from the population (dim x length x cases)
+#' @param labels Labeled vector that classify the observations.
 #' @param maxvars maximum number of variables included by the StepDiscrim
 #'        algorithm. Must be grater than 0 and, in normal cases, lesser than 100
 #' @param filters Vector indicating the filters to be tested. To see the
@@ -170,8 +170,8 @@ generateStepDiscrim <-
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' result <- testFilters(ECGExample, grps, features=c("var","cor"),
+#' labels <- c(rep(1, 5), rep(2, 5))
+#' result <- testFilters(ECGExample, labels, features=c("var","cor"),
 #'           filters= c("haar","d4"), maxvars = 3)
 #' }
 #'
@@ -185,13 +185,13 @@ generateStepDiscrim <-
 #' * \code{\link{availableFeatures}}
 #'
 #' @md
-testFilters <- function(XSeries,
-                        grps,
+testFilters <- function(series,
+                        labels,
                         maxvars,
                         filters = c("haar", "d4", "d6", "d8", "la8"),
                         features = c("Var", "Cor", "IQR", "PE", "DM"),
                         lev = 0) {
-    anyMissing(c(XSeries, grps, maxvars))
+    anyMissing(c(series, labels, maxvars))
     if (length(filters) == 0) {
         stop(
             "At least one filter must be provided. To see the available filters use
@@ -206,7 +206,7 @@ testFilters <- function(XSeries,
         )
     }
 
-    if (length(dim(XSeries)) != 3) {
+    if (length(dim(series)) != 3) {
         stop(
             "It seems that a dimension is missing, in case your series contains
          only one case, make sure that you have activated the option
@@ -215,8 +215,8 @@ testFilters <- function(XSeries,
         )
     }
 
-    if (length(grps) != dim(XSeries)[3]) {
-        stop("The number of observations in the data and those provided in grps do
+    if (length(labels) != dim(series)[3]) {
+        stop("The number of observations in the data and those provided in labels do
          not match.")
     }
 
@@ -224,7 +224,7 @@ testFilters <- function(XSeries,
     nFeatures <- length(features)
 
     for (f in filters) {
-        MWA <- MultiWaveAnalysis(XSeries, f)
+        MWA <- MultiWaveAnalysis(series, f)
         for (i in seq_len(nFeatures)) {
             comFeatures <- combn(features, i)
             listFeatures <- split(comFeatures,
@@ -232,7 +232,7 @@ testFilters <- function(XSeries,
                                       comFeatures
                                   )), each = nrow(comFeatures)))
             for (cFeatures in listFeatures) {
-                aux <- StepDiscrimRaw_(MWA, grps, maxvars, cFeatures)
+                aux <- StepDiscrimRaw_(MWA, labels, maxvars, cFeatures)
                 Tr <- aux[[1]]
                 incl <- aux[[2]]
                 maxVar <- min(maxvars, length(incl))
@@ -255,10 +255,10 @@ testFilters <- function(XSeries,
                         ),
                         Observations = MWA$Observations,
                         NLevels = MWA$NLevels,
-                        filter = MWA$filter
+                        Filter = MWA$Filter
                     )
-                    attr(MWAAux, "class") <- "WaveAnalysis"
-                    aux <- LOOCV(MWAAux, grps, "linear", TRUE)
+                    attr(MWAAux, "class") <- "MultiWaveAnalysis"
+                    aux <- LOOCV(MWAAux, labels, "linear", TRUE)
                     data <- append(data, list(
                         list(
                             CM = aux[[1]],
@@ -269,7 +269,7 @@ testFilters <- function(XSeries,
                             Features = cFeatures
                         )
                     ))
-                    aux <- LOOCV(MWAAux, grps, "quadratic", TRUE)
+                    aux <- LOOCV(MWAAux, labels, "quadratic", TRUE)
                     data <- append(data, list(
                         list(
                             CM = aux[[1]],

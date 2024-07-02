@@ -12,8 +12,8 @@
 #'
 #' @param model Trained linear discriminant.
 #'              see \code{\link{trainModel}}
-#' @param test WaveAnalysis class object to be used as test set.
-#' @param grps Vector that determines the class to which each of the
+#' @param test MultiWaveAnalysis class object to be used as test set.
+#' @param labels Vector that determines the class to which each of the
 #'             observations provided in the test set belongs.
 #' @param returnClassification Allows to select if the raw result classification
 #'        is returned.
@@ -30,13 +30,13 @@
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1
 #' # and the last 5 of class 2.
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' MWA <- generateStepDiscrim(ECGExample, grps, "haar", maxvars = 5, features = c("var"))
+#' labels <- c(rep(1, 5), rep(2, 5))
+#' MWA <- generateStepDiscrim(ECGExample, labels, "haar", maxvars = 5, features = c("var"))
 #' aux <- extractSubset(MWA, c(1, 2, 9, 10))
 #' MWATest <- aux[[1]]
 #' MWATrain <- aux[[2]]
-#' ldaDiscriminant <- trainModel(MWATrain, grps[3:8], "linear")
-#' CM <- testModel(ldaDiscriminant, MWATest, grps[c(1, 2, 9, 10)])
+#' ldaDiscriminant <- trainModel(MWATrain, labels[3:8], "linear")
+#' CM <- testModel(ldaDiscriminant, MWATest, labels[c(1, 2, 9, 10)])
 #' }
 #'
 #' @seealso
@@ -46,20 +46,20 @@
 #' @export
 testModel <- function(model,
                       test,
-                      grps,
+                      labels,
                       returnClassification = FALSE,
                       ...) {
-    checkmate::anyMissing(c(model, test, grps))
+    checkmate::anyMissing(c(model, test, labels))
     checkmate::assertFlag(returnClassification)
     stopifnot(is(model, "WaveModel"))
-    if (test$Observations != length(grps)) {
+    if (test$Observations != length(labels)) {
         stop(
             "The number of observations in the test set does not correspond to the
-         classes provided in the grps parameter."
+         classes provided in the labels parameter."
         )
     }
 
-    if (length(grps) < 2) {
+    if (length(labels) < 2) {
         stop(
             "The minimun numer of observations is 2. If you want to classify only
          one observation use \"classify\" function"
@@ -67,7 +67,7 @@ testModel <- function(model,
     }
 
     prediction <- classify(test, model)
-    CM <- confusionMatrix(as.factor(prediction), as.factor(grps))
+    CM <- confusionMatrix(as.factor(prediction), as.factor(labels))
 
     if (returnClassification) {
         return(list("CM" = CM, "Clasification" = prediction[[1]]))
@@ -82,14 +82,14 @@ testModel <- function(model,
 #' with different types of input parameters.
 #'
 #' @param data Starting data to generate the validation. It can be either the
-#'        raw data, or a previously generated WaveAnalysis object.
+#'        raw data, or a previously generated MultiWaveAnalysis object.
 #' @param ... Additional arguments
 #'
 #' @return Not return value, used as generic function
 #'
 #' @seealso
 #' * \code{\link{LOOCV.array}}
-#' * \code{\link{LOOCV.WaveAnalysis}}
+#' * \code{\link{LOOCV.MultiWaveAnalysis}}
 #'
 #' @importFrom checkmate anyMissing assertFlag
 #' @export
@@ -101,7 +101,7 @@ LOOCV <- function(data, ...) {
 #' data.
 #'
 #' It generates and validates a discriminant model starting from the data.
-#' First, a WaveAnalysis object is obtained according to the selected
+#' First, a MultiWaveAnalysis object is obtained according to the selected
 #' characteristics, filter and levels. Then, the most important features are
 #' selected using a stepwise discriminant that allows to select a maximum number
 #' of variables (maxvars) or a minimum enhancement step (VStep). Finally, the
@@ -109,7 +109,7 @@ LOOCV <- function(data, ...) {
 #' Leave-One-Out Cross Validation (LOOCV).
 #'
 #' @param data Sample from the population (dim x length x cases)
-#' @param grps Labeled vector that classify the observations
+#' @param labels Labeled vector that classify the observations
 #' @param f Selected filter for the MODWT (to see the available filters use the
 #'        function \code{\link{availableFilters}}
 #' @param method Selected method for the discriminant.
@@ -145,20 +145,20 @@ LOOCV <- function(data, ...) {
 #' @examples
 #' \donttest{
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' CM <- LOOCV(ECGExample, grps, "haar", "linear",
+#' labels <- c(rep(1, 5), rep(2, 5))
+#' CM <- LOOCV(ECGExample, labels, "haar", "linear",
 #'   maxvars = 5,
 #'   features = c("Var"), returnClassification = FALSE
 #' )
 #' # or with VStep
-#' CMV <- LOOCV(ECGExample, grps, "haar", "linear",
+#' CMV <- LOOCV(ECGExample, labels, "haar", "linear",
 #'  VStep = 5,
 #'  features = c("Var", "Cor"), returnClassification = FALSE
 #' )
 #' }
 #' @seealso
 #' * \code{\link{LOOCV}}
-#' * \code{\link{LOOCV.WaveAnalysis}}
+#' * \code{\link{LOOCV.MultiWaveAnalysis}}
 #' * \code{\link{availableFilters}}
 #' * \code{\link{availableFeatures}}
 #'
@@ -166,7 +166,7 @@ LOOCV <- function(data, ...) {
 #' @export
 LOOCV.array <-
     function(data,
-             grps,
+             labels,
              f,
              method,
              maxvars,
@@ -176,7 +176,7 @@ LOOCV.array <-
              returnClassification = FALSE,
              nCores = 0,
              ...) {
-        checkmate::anyMissing(c(data, grps, f, method))
+        checkmate::anyMissing(c(data, labels, f, method))
 
 
         if (length(features) == 0) {
@@ -213,28 +213,28 @@ LOOCV.array <-
             }
         }
 
-        XSeries <- data
+        series <- data
 
         f <- tolower(f)
         method <- tolower(method)
         features <- tolower(features)
 
         MWA <-
-            generateStepDiscrim(XSeries, grps, f, maxvars, VStep, lev, features,
+            generateStepDiscrim(series, labels, f, maxvars, VStep, lev, features,
                                 nCores)
-        return(LOOCV(MWA, grps, method, returnClassification))
+        return(LOOCV(MWA, labels, method, returnClassification))
     }
 
 #' LOOCV
 #'
-#' Performs a leave-one-cross-validation (LOOCV) method on a WaveAnalysis
+#' Performs a leave-one-cross-validation (LOOCV) method on a MultiWaveAnalysis
 #' object. It is advisable to have selected a subset of all features
 #' (\code{\link{StepDiscrim}},\code{\link{StepDiscrimV}})
 #'
-#' @param data WaveAnalysis object obtained with MultiWaveAnalysis and
+#' @param data MultiWaveAnalysis object obtained with MultiWaveAnalysis function and
 #'        preferably obtained a subset of its characteristics
 #'        (\code{\link{StepDiscrim}}, \code{\link{StepDiscrimV}})
-#' @param grps Labeled vector that classify the observations.
+#' @param labels Labeled vector that classify the observations.
 #' @param method Selected method for discrimination. Valid options
 #'        "linear" "quadratic"
 #' @param returnClassification Allows to select if the raw result classification
@@ -265,17 +265,17 @@ LOOCV.array <-
 #' @export
 #'
 #' @importFrom caret confusionMatrix
-LOOCV.WaveAnalysis <-
+LOOCV.MultiWaveAnalysis <-
     function(data,
-             grps,
+             labels,
              method,
              returnClassification = FALSE,
              ...) {
         if (missing(data)) {
             stop("The argument \"data\" must be provided")
         }
-        if (missing(grps)) {
-            stop("The argument \"grps\" must be provided")
+        if (missing(labels)) {
+            stop("The argument \"labels\" must be provided")
         }
         if (missing(method)) {
             stop("The argument \"method\" must be provided")
@@ -284,11 +284,11 @@ LOOCV.WaveAnalysis <-
             stop("The argument \"returnClassification\" must be a logical value")
         }
 
-        if (length(grps) != data$Observations) {
-            stop("The \"grps\" length mismatches with the observations of \"MWA\"")
+        if (length(labels) != data$Observations) {
+            stop("The \"labels\" length mismatches with the observations of \"MWA\"")
         }
 
-        stopifnot(is(data, "WaveAnalysis"))
+        stopifnot(is(data, "MultiWaveAnalysis"))
 
         MWA <- data
 
@@ -300,11 +300,11 @@ LOOCV.WaveAnalysis <-
             aux <- extractSubset(MWA, c(i))
             MWATest <- aux[[1]]
             MWATrain <- aux[[2]]
-            grpsT <- grps[-i]
-            model <- trainModel(MWATrain, grpsT, method)
+            labelsT <- labels[-i]
+            model <- trainModel(MWATrain, labelsT, method)
             class[i] <- classify(MWATest, model)
         }
-        CM <- confusionMatrix(as.factor(class), as.factor(grps))
+        CM <- confusionMatrix(as.factor(class), as.factor(labels))
 
         if (returnClassification) {
             return(list("CM" = CM, "classification" = class))
@@ -319,14 +319,14 @@ LOOCV.WaveAnalysis <-
 #' with different types of input parameters.
 #'
 #' @param data Starting data to generate the validation. It can be either the
-#'        raw data, or a previously generated WaveAnalysis object.
+#'        raw data, or a previously generated MultiWaveAnalysis object.
 #' @param ... Additional arguments
 #'
 #' @return Not return value, used as generic function
 #'
 #' @seealso
 #' * \code{\link{KFCV.array}}
-#' * \code{\link{KFCV.WaveAnalysis}}
+#' * \code{\link{KFCV.MultiWaveAnalysis}}
 #' @export
 KFCV <- function(data, ...) {
     UseMethod("KFCV")
@@ -337,7 +337,7 @@ KFCV <- function(data, ...) {
 #' data.
 #'
 #' It generates and validates a discriminant model starting from the data. First
-#' , a WaveAnalysis object is obtained according to the selected characteristics
+#' , a MultiWaveAnalysis object is obtained according to the selected characteristics
 #' ,filter and levels. Then, the most important features are selected using a
 #' stepwise discriminant that allows to select a maximum number of variables
 #' (maxvars) or a minimum enhancement step (VStep). Finally, the model is
@@ -345,7 +345,7 @@ KFCV <- function(data, ...) {
 #' K-Fold Cross Validation (KFCV).
 #'
 #' @param data Sample from the population (dim x length x cases)
-#' @param grps Labeled vector that classify the observations
+#' @param labels Labeled vector that classify the observations
 #' @param f Selected filter for the MODWT (to see the available filters use the
 #'        function \code{\link{availableFilters}}
 #' @param method Selected method for the discriminant.
@@ -383,13 +383,13 @@ KFCV <- function(data, ...) {
 #' @examples
 #' \donttest{
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' CM <- KFCV(ECGExample, grps, "haar", "linear",
+#' labels <- c(rep(1, 5), rep(2, 5))
+#' CM <- KFCV(ECGExample, labels, "haar", "linear",
 #'   maxvars = 5,
 #'   features = c("Var"), returnClassification = FALSE
 #' )
 #' # or with VStep
-#' CMV <- KFCV(ECGExample, grps, "haar", "linear",
+#' CMV <- KFCV(ECGExample, labels, "haar", "linear",
 #'  k = 5,
 #'  VStep = 5,
 #'  features = c("Var"), returnClassification = FALSE
@@ -397,13 +397,13 @@ KFCV <- function(data, ...) {
 #' }
 #' @seealso
 #' * \code{\link{LOOCV}}
-#' * \code{\link{LOOCV.WaveAnalysis}}
+#' * \code{\link{LOOCV.MultiWaveAnalysis}}
 #' * \code{\link{availableFilters}}
 #' * \code{\link{availableFeatures}}
 #' @export
 KFCV.array <-
     function(data,
-             grps,
+             labels,
              f,
              method,
              maxvars,
@@ -414,7 +414,7 @@ KFCV.array <-
              returnClassification = FALSE,
              nCores = 0,
              ...) {
-        checkmate::anyMissing(c(data, grps, f, method, features))
+        checkmate::anyMissing(c(data, labels, f, method, features))
 
         if (length(features) == 0) {
             stop(
@@ -460,16 +460,16 @@ KFCV.array <-
         nCores <- checkmate::asCount(nCores)
 
 
-        XSeries <- data
+        series <- data
 
         f <- tolower(f)
         method <- tolower(method)
         features <- tolower(features)
 
         MWA <-
-            generateStepDiscrim(XSeries, grps, f, maxvars, VStep, lev, features,
+            generateStepDiscrim(series, labels, f, maxvars, VStep, lev, features,
                                 nCores)
-        return(KFCV(MWA, grps, method, k, returnClassification))
+        return(KFCV(MWA, labels, method, k, returnClassification))
     }
 
 #' KFCV
@@ -478,10 +478,10 @@ KFCV.array <-
 #' In case the value k is not divisor of the number of observations the last
 #' group will have nobs mod k observations.
 #'
-#' @param data WaveAnalysis (MWA) object obtained with MultiWaveAnalysis and
+#' @param data MultiWaveAnalysis (MWA) object obtained with MultiWaveAnalysis and
 #'        preferably obtained a subset of its characteristics
 #'        (\code{\link{StepDiscrim}},\code{\link{StepDiscrimV}})
-#' @param grps labeled vector that classify the observations.
+#' @param labels labeled vector that classify the observations.
 #' @param method Selected method for discrimination. Valid options
 #'       "linear" "quadratic"
 #' @param k the number of folds in KFCV. Must be a positive integer and lower or
@@ -509,17 +509,17 @@ KFCV.array <-
 #' @importFrom checkmate anyMissing assertFlag
 #'
 #' @export
-KFCV.WaveAnalysis <- function(data,
-                              grps,
+KFCV.MultiWaveAnalysis <- function(data,
+                              labels,
                               method,
                               k = 5L,
                               returnClassification = FALSE,
                               ...) {
-    checkmate::anyMissing(c(data, grps, method))
+    checkmate::anyMissing(c(data, labels, method))
     checkmate::assertFlag(returnClassification)
 
-    if (length(grps) != data$Observations) {
-        stop("The \"grps\" length mismatches with the observations of \"MWA\"")
+    if (length(labels) != data$Observations) {
+        stop("The \"labels\" length mismatches with the observations of \"MWA\"")
     }
 
     k <- asCount(k)
@@ -550,7 +550,7 @@ KFCV.WaveAnalysis <- function(data,
         }
     }
 
-    reorderGrps <- grps[cols]
+    reorderGrps <- labels[cols]
     class <- vector("numeric", nobs)
     inc <- floor(nobs / k)
     n <- 1
@@ -559,8 +559,8 @@ KFCV.WaveAnalysis <- function(data,
         aux <- extractSubset(reorderMWA, n:m)
         MWATest <- aux[[1]]
         MWATrain <- aux[[2]]
-        grpsT <- reorderGrps[-c(n:m)]
-        model <- trainModel(MWATrain, grpsT, method)
+        labelsT <- reorderGrps[-c(n:m)]
+        model <- trainModel(MWATrain, labelsT, method)
         class[n:m] <- classify(MWATest, model)
         n <- n + inc
         m <- m + inc
@@ -581,7 +581,7 @@ KFCV.WaveAnalysis <- function(data,
 #' This function allows training of a discriminant model using different inputs
 #'
 #' @param data Starting data to generate a discriminator (linear or quadratic).
-#'        This starting data can be either the raw data, or a WaveAnalysis
+#'        This starting data can be either the raw data, or a MultiWaveAnalysis
 #'        object generated earlier.
 #' @param ... Additional arguments
 #'
@@ -589,7 +589,7 @@ KFCV.WaveAnalysis <- function(data,
 #'
 #' @seealso
 #' * \code{\link{trainModel.array}}
-#' * \code{\link{trainModel.WaveAnalysis}}
+#' * \code{\link{trainModel.MultiWaveAnalysis}}
 #'
 #' @export
 #'
@@ -608,7 +608,7 @@ trainModel <- function(data, ...) {
 #' the selected discriminant model is trained with the subset obtained.
 #'
 #' @param data Sample from the population (dim x length x cases)
-#' @param grps Labeled vector that classify the observations
+#' @param labels Labeled vector that classify the observations
 #' @param f Selected filter for the MODWT (to see the available filters use the
 #'        function availableFilters)
 #' @param method Selected method for the discriminant. Valid values
@@ -637,12 +637,12 @@ trainModel <- function(data, ...) {
 #' \donttest{
 #' load(system.file("extdata/ECGExample.rda",package = "TSEAL"))
 #' # The dataset has the first 5 elements of class 1 and the last 5 of class 2.
-#' grps <- c(rep(1, 5), rep(2, 5))
-#' model <- trainModel(ECGExample, grps, "d6", "linear",
+#' labels <- c(rep(1, 5), rep(2, 5))
+#' model <- trainModel(ECGExample, labels, "d6", "linear",
 #'   maxvars = 5, features = c("Var")
 #' )
 #' # or using VStep
-#' modelV <- trainModel(ECGExample, grps, "d6", "linear",
+#' modelV <- trainModel(ECGExample, labels, "d6", "linear",
 #'     VStep = 14.5, features = c("Var")
 #' )
 #' }
@@ -654,7 +654,7 @@ trainModel <- function(data, ...) {
 #' @md
 trainModel.array <-
     function(data,
-             grps,
+             labels,
              f,
              method,
              maxvars,
@@ -664,10 +664,10 @@ trainModel.array <-
              nCores = 0,
              ...) {
         if (missing(data)) {
-            stop("The argument \"XSeries\" must be provided")
+            stop("The argument \"series\" must be provided")
         }
-        if (missing(grps)) {
-            stop("The argument \"grps\" must be provided")
+        if (missing(labels)) {
+            stop("The argument \"labels\" must be provided")
         }
         if (missing(f)) {
             stop(
@@ -699,7 +699,7 @@ trainModel.array <-
             )
         }
 
-        if (length(grps)) {
+        if (length(labels)) {
             if (missing(maxvars) && missing(VStep)) {
                 stop("maxvars o VStep must be defined")
             }
@@ -718,21 +718,21 @@ trainModel.array <-
             }
         }
 
-        XSeries <- data
+        series <- data
 
         f <- tolower(f)
         method <- tolower(method)
         features <- tolower(features)
 
         MWA <-
-            generateStepDiscrim(XSeries, grps, f, maxvars, VStep, lev,
+            generateStepDiscrim(series, labels, f, maxvars, VStep, lev,
                                 features, nCores)
-        return(trainModel(MWA, grps, method))
+        return(trainModel(MWA, labels, method))
     }
-#' Generates a discriminant model from an already generated "WaveAnalysis".
+#' Generates a discriminant model from an already generated "MultiWaveAnalysis".
 #'
-#' @param data A WaveAnalysis object obtained with MultiWaveAnalysis function
-#' @param grps Labeled vector that classify the observations.
+#' @param data A MultiWaveAnalysis object obtained with MultiWaveAnalysis function
+#' @param labels Labeled vector that classify the observations.
 #' @param method Selected method for discrimination. Valid options are
 #'        "linear" and "quadratic"
 #' @param ... Additional arguments
@@ -757,13 +757,13 @@ trainModel.array <-
 #' @export
 #'
 #' @importFrom MASS lda qda
-trainModel.WaveAnalysis <- function(data, grps, method, ...) {
+trainModel.MultiWaveAnalysis <- function(data, labels, method, ...) {
     MWA <- data
     if (missing(MWA)) {
         stop("The argument \"MWA\" must be provided")
     }
-    if (missing(grps)) {
-        stop("The argument \"grps\" must be provided")
+    if (missing(labels)) {
+        stop("The argument \"labels\" must be provided")
     }
 
     if (missing(method)) {
@@ -773,8 +773,8 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
         )
     }
 
-    if (length(grps) != data$Observations) {
-        stop("The \"grps\" length mismatches with the observations of \"MWA\"")
+    if (length(labels) != data$Observations) {
+        stop("The \"labels\" length mismatches with the observations of \"MWA\"")
     }
 
     if (length(method) > 1) {
@@ -782,15 +782,15 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
          (\"linear\" or \"quadratic\") not a list")
     }
 
-    stopifnot(is(MWA, "WaveAnalysis"))
+    stopifnot(is(MWA, "MultiWaveAnalysis"))
 
     method <- tolower(method)
 
     values <- values(MWA)
     if (method == "linear") {
-        model <- lda(t(values), grps)
+        model <- lda(t(values), labels)
     } else if (method == "quadratic") {
-        model <- qda(t(values), grps)
+        model <- qda(t(values), labels)
     } else {
         stop("Method", as.character(method), "not supported")
     }
@@ -805,7 +805,7 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 
 
     x <- list(Model = model, Features = features, Selected = selected,
-              NLevels = MWA$NLevels, filter = MWA$filter)
+              NLevels = MWA$NLevels, Filter = MWA$Filter)
     attr(x, "class") <- "WaveModel"
     return(x)
 }
@@ -816,8 +816,8 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #' that could have been obtained in several ways (such as using the train model
 #' function). T
 #'
-#' @param data The data to be classified. This  data can be either the raw data, or a WaveAnalysis
-#'        object generated earlier.
+#' @param data The data to be classified. This  data can be either the raw data
+#'             , or a MultiWaveAnalysis object generated earlier.
 #' @param ... Additional arguments
 #'
 #' @return A factor with predicted class of each observation
@@ -825,7 +825,7 @@ trainModel.WaveAnalysis <- function(data, grps, method, ...) {
 #' @seealso
 #' * \code{\link{trainModel}}
 #' * \code{\link{classify.array}}
-#' * \code{\link{classify.WaveAnalysis}}
+#' * \code{\link{classify.MultiWaveAnalysis}}
 #'
 #'
 #' @export
@@ -840,7 +840,7 @@ classify <- function(data, ...){
 #' function).
 #'
 #' @param data Data to be classified by the model. Remember that it must be an
-#'        object of type WaveAnalysis. Note that it should have the same
+#'        object of type MultiWaveAnalysis. Note that it should have the same
 #'        variables selected as those used to generate the model.
 #' @param model pretrained discriminant model (lda or qda)
 #' @param ... Additional arguments
@@ -873,11 +873,11 @@ classify <- function(data, ...){
 #'
 #' @importFrom stats predict
 #' @importFrom magrittr %>%
-classify.WaveAnalysis <- function(data, model, ...) {
+classify.MultiWaveAnalysis <- function(data, model, ...) {
     if (missing(model)) {
         stop("The argument \"model\" must be provided")
     }
-    stopifnot(is(data, "WaveAnalysis"))
+    stopifnot(is(data, "MultiWaveAnalysis"))
     stopifnot(is(model, "WaveModel"))
 
     values <- values(data)
@@ -933,7 +933,7 @@ classify.array <- function(data, model, ...) {
         )
     }
 
-    MWA <- MultiWaveAnalysis(data, model$filter, model$NLevels, model$Features);
+    MWA <- MultiWaveAnalysis(data, model$Filter, model$NLevels, model$Features);
 
     MWADiscrim <- list(
         Features = list(
@@ -952,10 +952,10 @@ classify.array <- function(data, model, ...) {
         ),
         Observations = MWA$Observations,
         NLevels = MWA$NLevels,
-        filter = MWA$filter
+        Filter = MWA$Filter
         )
 
-    attr(MWADiscrim, "class") <- "WaveAnalysis"
+    attr(MWADiscrim, "class") <- "MultiWaveAnalysis"
 
     for (feature in names(model$Selected)) {
         selection <- model$Selected[[feature]]
@@ -965,5 +965,5 @@ classify.array <- function(data, model, ...) {
         MWADiscrim$StepSelection[[feature]] <- selection
     }
 
-    return (classify.WaveAnalysis(MWADiscrim,model))
+    return (classify.MultiWaveAnalysis(MWADiscrim,model))
 }
